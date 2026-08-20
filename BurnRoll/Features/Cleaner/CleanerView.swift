@@ -1,0 +1,371 @@
+import SwiftUI
+
+struct CleanerView: View {
+    private enum SheetDestination: String, Identifiable {
+        case settings
+        case mediaSource
+        case review
+
+        var id: String { rawValue }
+    }
+
+    @Environment(AppState.self) private var appState
+    @State private var viewerAsset: MediaAsset?
+    @State private var sheetDestination: SheetDestination?
+
+    var body: some View {
+        VStack(spacing: 10) {
+            header
+
+            if let summary = appState.lastDeletionSummary {
+                lastCleanupReminder(summary)
+            }
+
+            RecentDecisionsStrip(
+                library: appState.photoLibrary,
+                actions: appState.session.reviewHistory,
+                onOpen: { viewerAsset = $0 }
+            )
+            .frame(maxWidth: .infinity)
+            .frame(height: 64)
+
+            Group {
+                if let asset = appState.currentAsset {
+                    SwipeMediaCard(
+                        library: appState.photoLibrary,
+                        asset: asset,
+                        onOpen: { viewerAsset = asset },
+                        onDecision: appState.decide
+                    )
+                    .id(asset.id)
+                    .transition(.opacity.combined(with: .scale(scale: 0.97)))
+                } else {
+                    emptyState
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+            progressBanner
+
+            bottomBar
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 10)
+        .padding(.bottom, 8)
+        .burnRollBackground()
+        .fullScreenCover(item: $viewerAsset) { asset in
+            MediaViewer(
+                library: appState.photoLibrary,
+                asset: asset,
+                decision: appState.session.decision(forAssetID: asset.id),
+                onDecisionChange: appState.session.decision(forAssetID: asset.id) == nil
+                    ? nil
+                    : { appState.changeDecision(for: asset, to: $0) }
+            )
+        }
+        .sheet(item: $sheetDestination) { destination in
+            switch destination {
+            case .settings:
+                SettingsView()
+                    .environment(appState)
+            case .mediaSource:
+                MediaSourcePickerView()
+                    .environment(appState)
+            case .review:
+                ReviewHistoryView()
+                    .environment(appState)
+            }
+        }
+        .task(id: "\(appState.photoLibrary.selectedSource.id)-\(appState.session.currentIndex)") {
+            appState.photoLibrary.updateCache(
+                around: appState.session.currentIndex,
+                targetSize: CGSize(width: 1_200, height: 1_600)
+            )
+        }
+    }
+
+    private var header: some View {
+        HStack(alignment: .center, spacing: 12) {
+            HStack(spacing: 8) {
+                Button {
+                    sheetDestination = .settings
+                } label: {
+                    BurnRollIconTile(
+                        systemName: "gearshape",
+                        role: .light
+                    )
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Settings")
+
+                Button {
+                    sheetDestination = .mediaSource
+                } label: {
+                    BurnRollIconTile(
+                        systemName: appState.photoLibrary.selectedSource.systemImage,
+                        role: .photo
+                    )
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(
+                    "Media source, \(appState.photoLibrary.selectedSource.title), "
+                    + "\(appState.photoLibrary.selectedReviewScope.title)"
+                )
+                .accessibilityHint("Choose review status, media type, or album")
+            }
+
+            VStack(alignment: .leading, spacing: 1) {
+                Text(
+                    "\(appState.photoLibrary.selectedReviewScope.shortTitle) · "
+                    + "\(appState.photoLibrary.selectedSource.title) · will free"
+                )
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(BurnRollTheme.secondaryText)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
+                Text(appState.session.estimatedBytes.formattedByteCount)
+                    .font(.title2.weight(.bold))
+                    .contentTransition(.numericText())
+            }
+
+            Spacer()
+
+            Button {
+                sheetDestination = .review
+            } label: {
+                HStack(spacing: 7) {
+                    BurnRollSymbol(systemName: "photo.stack.fill", size: 16, role: .photo)
+                    Text("Review \(appState.session.reviewHistory.count)")
+                }
+                    .font(.subheadline.weight(.bold))
+                    .foregroundStyle(BurnRollTheme.primaryText)
+                    .padding(.horizontal, 13)
+                    .padding(.vertical, 11)
+                    .background(BurnRollTheme.surface, in: Capsule())
+            }
+            .accessibilityLabel("Review history, \(appState.session.reviewHistory.count) decisions")
+        }
+    }
+
+    private var bottomBar: some View {
+        HStack(spacing: 12) {
+            Button {
+                appState.undo()
+                Haptics.undo()
+            } label: {
+                HStack(spacing: 8) {
+                    BurnRollSymbol(systemName: "arrow.uturn.backward", size: 17, role: .neutral)
+                    Text("Undo")
+                }
+                    .font(.headline)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 15)
+                    .background(BurnRollTheme.surface, in: Capsule())
+            }
+            .buttonStyle(.plain)
+            .disabled(appState.session.lastAction == nil)
+            .opacity(appState.session.lastAction == nil ? 0.4 : 1)
+
+            keepButton
+
+            decisionButton(
+                title: "Burn",
+                systemImage: "flame.fill",
+                color: BurnRollTheme.burn,
+                decision: .burn
+            )
+        }
+    }
+
+    private var keepButton: some View {
+        Button {
+            appState.decide(.keep)
+            Haptics.keep()
+        } label: {
+            VStack(spacing: 5) {
+                BurnRollSymbol(
+                    systemName: "heart.fill",
+                    size: 28,
+                    weight: .black,
+                    role: .light
+                )
+                .frame(width: 62, height: 62)
+                .background(
+                    LinearGradient(
+                        colors: [Color(red: 0.59, green: 0.78, blue: 0.22), BurnRollTheme.keep],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    in: Circle()
+                )
+                .overlay {
+                    Circle()
+                        .strokeBorder(.white.opacity(0.18), lineWidth: 1)
+                }
+                .shadow(color: BurnRollTheme.keep.opacity(0.32), radius: 11, y: 6)
+
+                Text("Keep")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(BurnRollTheme.primaryText)
+            }
+            .frame(width: 72)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(appState.currentAsset == nil)
+        .opacity(appState.currentAsset == nil ? 0.4 : 1)
+        .accessibilityLabel("Keep current item")
+        .accessibilityHint("Keeps the current photo or video and moves to the next item")
+    }
+
+    private func decisionButton(
+        title: String,
+        systemImage: String,
+        color: Color,
+        decision: ReviewDecision
+    ) -> some View {
+        Button {
+            appState.decide(decision)
+            if decision == .keep {
+                Haptics.keep()
+            } else {
+                Haptics.burn()
+            }
+        } label: {
+            HStack(spacing: 7) {
+                BurnRollSymbol(systemName: systemImage, size: 16, role: .light)
+                Text(title)
+            }
+            .font(.headline)
+            .foregroundStyle(.white)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 15)
+            .background(color, in: Capsule())
+        }
+        .buttonStyle(.plain)
+        .disabled(appState.currentAsset == nil)
+        .opacity(appState.currentAsset == nil ? 0.4 : 1)
+        .accessibilityHint("Makes the same decision as swiping the current item")
+    }
+
+    private var progressBanner: some View {
+        HStack(spacing: 0) {
+            progressMetric(appState.session.totalAssetCount, label: "Total")
+            progressDivider
+            progressMetric(appState.session.reviewedCount, label: "Processed")
+            progressDivider
+            progressMetric(appState.session.remainingCount, label: "Remaining")
+        }
+        .padding(.vertical, 10)
+        .background(BurnRollTheme.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(
+            "Library progress, \(appState.session.totalAssetCount) total, "
+            + "\(appState.session.reviewedCount) processed, "
+            + "\(appState.session.remainingCount) remaining"
+        )
+    }
+
+    private var progressDivider: some View {
+        Rectangle()
+            .fill(BurnRollTheme.secondaryText.opacity(0.18))
+            .frame(width: 1, height: 28)
+    }
+
+    private func progressMetric(_ value: Int, label: String) -> some View {
+        VStack(spacing: 1) {
+            Text(value.formatted())
+                .font(.subheadline.weight(.bold))
+                .contentTransition(.numericText())
+            Text(label)
+                .font(.caption2.weight(.medium))
+                .foregroundStyle(BurnRollTheme.secondaryText)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private func lastCleanupReminder(_ summary: AppState.DeletionSummary) -> some View {
+        HStack(spacing: 10) {
+            BurnRollSymbol(systemName: "clock.arrow.circlepath", size: 15, role: .keep)
+
+            Text("Last cleanup")
+                .font(.subheadline.weight(.semibold))
+
+            Spacer(minLength: 8)
+
+            Text("\(summary.clearedBytes.formattedByteCount) potential")
+                .font(.subheadline.weight(.bold))
+
+            Text("\(summary.itemCount) \(summary.itemCount == 1 ? "item" : "items")")
+                .font(.caption.weight(.medium))
+                .foregroundStyle(BurnRollTheme.secondaryText)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background(BurnRollTheme.surface, in: Capsule())
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(
+            "Last cleanup selected approximately \(summary.clearedBytes.formattedByteCount) from \(summary.itemCount) items"
+        )
+    }
+
+    private var emptyState: some View {
+        Group {
+            if appState.session.totalAssetCount == 0 {
+                emptyFilteredLibraryState
+            } else {
+                ContentUnavailableView {
+                    Label(
+                        appState.photoLibrary.selectedReviewScope == .notReviewed
+                            ? "Checkpoint saved"
+                            : "You’re all caught up",
+                        systemImage: appState.photoLibrary.selectedReviewScope == .notReviewed
+                            ? "bookmark.fill"
+                            : "sparkles"
+                    )
+                } description: {
+                    if appState.photoLibrary.selectedReviewScope == .notReviewed {
+                        Text(
+                            "You reviewed everything in \(appState.photoLibrary.selectedSource.title). "
+                            + "Come back later and new items will appear here automatically."
+                        )
+                    } else {
+                        Text("You reviewed everything in \(appState.photoLibrary.selectedSource.title).")
+                    }
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var emptyFilteredLibraryState: some View {
+        switch appState.photoLibrary.selectedReviewScope {
+        case .notReviewed:
+            ContentUnavailableView {
+                Label("Nothing left to review", systemImage: "checkmark.seal.fill")
+            } description: {
+                Text(
+                    "Your bookmark is up to date. New photos will appear here automatically, "
+                    + "or choose Reviewed or All items from the top-left button."
+                )
+            }
+        case .reviewed:
+            ContentUnavailableView {
+                Label("No reviewed items", systemImage: "bookmark")
+            } description: {
+                Text("Make a Keep or Burn decision first, or choose Not reviewed or All items.")
+            }
+        case .all:
+            ContentUnavailableView {
+                Label(
+                    appState.photoLibrary.selectedSource.id == "all"
+                        ? "No media found"
+                        : "No items in \(appState.photoLibrary.selectedSource.title)",
+                    systemImage: appState.photoLibrary.selectedSource.systemImage
+                )
+            } description: {
+                Text("Choose another media type or album from the top-left button.")
+            }
+        }
+    }
+}

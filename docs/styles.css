@@ -1,0 +1,87 @@
+:root {
+  color-scheme: light dark;
+  --bg: #f6f1ea;
+  --surface: #fffdf9;
+  --ink: #1c120c;
+  --muted: #6b584c;
+  --accent: #c45a1a;
+  --line: rgba(28, 18, 12, 0.1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #16100c;
+    --surface: #211812;
+    --ink: #f6eee6;
+    --muted: #cbb8aa;
+    --accent: #ef8a4a;
+    --line: rgba(246, 238, 230, 0.12);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  line-height: 1.55;
+}
+
+main {
+  max-width: 42rem;
+  margin: 0 auto;
+  padding: 2.5rem 1.25rem 4rem;
+}
+
+a {
+  color: var(--accent);
+}
+
+header p,
+.muted,
+footer {
+  color: var(--muted);
+}
+
+h1 {
+  font-size: 2rem;
+  margin: 0 0 0.4rem;
+}
+
+h2 {
+  font-size: 1.15rem;
+  margin: 1.75rem 0 0.4rem;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 1.1rem 1.2rem;
+  margin: 1.2rem 0;
+}
+
+.nav {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin: 1rem 0 1.5rem;
+}
+
+.email {
+  font-weight: 600;
+}
+
+footer {
+  margin-top: 2.5rem;
+  font-size: 0.9rem;
+}
