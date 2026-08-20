@@ -4,13 +4,13 @@ import Foundation
 /// After changing policy text, update `docs/privacy/index.html` to match.
 enum BurnRollLegal {
     static let developerName = "Vitalii Badion"
-    static let supportEmail = "badion926@gmail.com"
+    static let supportEmail = "burnrollsupport@gmail.com"
     static let copyright = "© 2026 Vitalii Badion"
     static let policyVersion = "0.9"
 
     static let privacyPolicyURL = URL(string: "https://vitaliibadion.github.io/burnroll/privacy/")!
     static let supportURL = URL(string: "https://vitaliibadion.github.io/burnroll/support/")!
-    static let supportMailtoURL = URL(string: "mailto:badion926@gmail.com")!
+    static let supportMailtoURL = URL(string: "mailto:burnrollsupport@gmail.com")!
 
     static let ageRating = "4+"
 
@@ -59,7 +59,7 @@ enum BurnRollLegal {
         ),
         PolicySection(
             title: "Contact",
-            text: "BurnRoll is developed by Vitalii Badion. For privacy or support questions, email badion926@gmail.com."
+            text: "BurnRoll is developed by Vitalii Badion. For privacy or support questions, email burnrollsupport@gmail.com."
         )
     ]
 }

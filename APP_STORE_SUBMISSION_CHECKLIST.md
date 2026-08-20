@@ -14,7 +14,7 @@ Current status: core code, privacy copy, and analytics plumbing are in the proje
 - [x] Deleted items are accurately described as moving to Recently Deleted for up to 30 days.
 - [x] Privacy manifest declares no tracking. It now declares product interaction, crash/diagnostic data, and device ID used by Firebase Analytics/Crashlytics.
 - [x] The in-app privacy policy covers Photos, local reviewed state, Firebase Analytics, Crashlytics, and optional notifications.
-- [x] Settings includes support contact for Vitalii Badion (`badion926@gmail.com`) and links to the public HTTPS privacy and support pages.
+- [x] Settings includes support contact for Vitalii Badion (`burnrollsupport@gmail.com`) and links to the public HTTPS privacy and support pages.
 - [x] Static privacy and support pages live in `docs/` for GitHub Pages. Paste values and the 4+ age-rating answers from `AppStore/LISTING.md`.
 - [x] The app has no account, purchases, ads, or BurnRoll backend. Photos stay on-device.
 - [x] Analytics events are allowlisted and omit photo contents, filenames, paths, EXIF, and asset identifiers.
@@ -32,7 +32,7 @@ Current status: core code, privacy copy, and analytics plumbing are in the proje
 - [ ] Enable GitHub Pages on [`vitaliibadion/burnroll`](https://github.com/vitaliibadion/burnroll) (`main` / `/docs`) and confirm these HTTPS URLs load without a login: `https://vitaliibadion.github.io/burnroll/privacy/` and `https://vitaliibadion.github.io/burnroll/support/`.
 - [ ] Paste those URLs into App Store Connect Privacy Policy URL and Support URL. Email alone is not a Support URL.
 - [ ] Complete Apple's age-rating questionnaire using `AppStore/LISTING.md` (expected **4+**, Made for Kids: No). Do not skip renamed questions; keep the same intent.
-- [ ] Add final description, keywords, promotional text if used, category, copyright owner (`© 2026 Vitalii Badion`), review contact (`Vitalii Badion` / `badion926@gmail.com`), screenshots, and all required localized metadata. Upload-ready iPhone 6.9" screenshots (1320×2868) are in `AppStore/Screenshots/`.
+- [ ] Add final description, keywords, promotional text if used, category, copyright owner (`© 2026 Vitalii Badion`), review contact (`Vitalii Badion` / `burnrollsupport@gmail.com`), screenshots, and all required localized metadata. Upload-ready iPhone 6.9" screenshots (1320×2868) are in `AppStore/Screenshots/`.
 - [ ] Add App Review notes explaining that Photos access is core to the app and that deletion always requires review plus confirmation.
 - [ ] Test on at least one physical iPhone with full Photos access, limited Photos access, denied access, iCloud-only assets, Live Photos, RAW, large videos, and Low Power/low-storage conditions.
 - [ ] Confirm All / Reviewed / Not Reviewed switching stays responsive on a large library.

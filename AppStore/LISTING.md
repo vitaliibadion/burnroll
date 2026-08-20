@@ -16,7 +16,7 @@ Publish `docs/` with GitHub Pages first. Apple will reject a 404 or a login-wall
 | Field | Value |
 | --- | --- |
 | Developer / copyright | Vitalii Badion |
-| Support email | badion926@gmail.com |
+| Support email | burnrollsupport@gmail.com |
 | Copyright | © 2026 Vitalii Badion |
 
 The in-app Settings screen emails this address and links to the Support URL.
