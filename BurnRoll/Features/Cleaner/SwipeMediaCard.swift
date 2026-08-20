@@ -20,29 +20,28 @@ struct SwipeMediaCard: View {
             let isPortrait = asset.pixelHeight > asset.pixelWidth
 
             VStack(spacing: 0) {
-                ZStack {
-                    PhotoAssetImage(
-                        library: library,
-                        assetID: asset.id,
-                        targetSize: CGSize(
-                            width: proxy.size.width * displayScale,
-                            height: proxy.size.height * displayScale
-                        ),
-                        contentMode: isPortrait ? .fill : .fit
-                    )
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .padding(.horizontal, isPortrait ? 0 : 8)
-                    .padding(.top, isPortrait ? 0 : 8)
+                Color.clear
+                    .overlay {
+                        PhotoAssetImage(
+                            library: library,
+                            assetID: asset.id,
+                            targetSize: CGSize(
+                                width: proxy.size.width * displayScale,
+                                height: proxy.size.height * displayScale
+                            ),
+                            contentMode: isPortrait ? .fill : .fit
+                        )
+                        .padding(.horizontal, isPortrait ? 0 : 8)
+                        .padding(.top, isPortrait ? 0 : 8)
+                    }
+                    .overlay {
+                        decisionTint(progress: progress)
+                    }
                     .clipped()
-
-                    decisionTint(progress: progress)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .clipped()
 
                 MediaMetadataView(asset: asset)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .fixedSize(horizontal: false, vertical: true)
+                    .layoutPriority(1)
             }
             .frame(width: proxy.size.width, height: proxy.size.height)
             .background(BurnRollTheme.surface)

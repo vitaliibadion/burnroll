@@ -3,9 +3,8 @@ import Foundation
 /// Public listing copy shared by Settings and the GitHub Pages site in `docs/`.
 /// After changing policy text, update `docs/privacy/index.html` to match.
 enum BurnRollLegal {
-    static let developerName = "Vitalii Badion"
     static let supportEmail = "burnrollsupport@gmail.com"
-    static let copyright = "© 2026 Vitalii Badion"
+    static let copyright = "© 2026 BurnRoll"
     static let policyVersion = "0.9"
 
     static let privacyPolicyURL = URL(string: "https://vitaliibadion.github.io/burnroll/privacy/")!
@@ -51,7 +50,7 @@ enum BurnRollLegal {
         ),
         PolicySection(
             title: "Notifications",
-            text: "Cleanup reminders are optional and require your permission. If you opt in, BurnRoll stores an on-device library baseline and schedules a local reminder for your selected threshold of 20–500 additional photos, approximately 5 GB of estimated media growth, or an exact 30-day interval. iOS does not continuously wake BurnRoll to inspect Photos while the app is closed, so BurnRoll evaluates accumulation when the app opens and schedules a conservative local reminder. You can send a five-second test, turn reminders off in BurnRoll Settings, or change notification permission in iOS Settings."
+            text: "Cleanup reminders are optional and require your permission. If you opt in, BurnRoll stores an on-device library baseline and schedules a local reminder for your selected threshold of 20–500 additional photos, approximately 5 GB of estimated media growth, or an exact 30-day interval. iOS does not continuously wake BurnRoll to inspect Photos while the app is closed, so BurnRoll evaluates accumulation when the app opens and schedules a conservative local reminder. You can turn reminders off in BurnRoll Settings, or change notification permission in iOS Settings."
         ),
         PolicySection(
             title: "Your controls",
@@ -59,7 +58,7 @@ enum BurnRollLegal {
         ),
         PolicySection(
             title: "Contact",
-            text: "BurnRoll is developed by Vitalii Badion. For privacy or support questions, email burnrollsupport@gmail.com."
+            text: "For privacy or support questions, email burnrollsupport@gmail.com."
         )
     ]
 }

@@ -25,7 +25,7 @@ Apple needs public HTTPS pages. The site source is `docs/`. After GitHub Pages i
 - Privacy Policy: `https://vitaliibadion.github.io/burnroll/privacy/`
 - Support: `https://vitaliibadion.github.io/burnroll/support/`
 
-Support contact is Vitalii Badion, `burnrollsupport@gmail.com`. Age-rating answers (4+) are in `AppStore/LISTING.md`.
+Support contact is `burnrollsupport@gmail.com`. Age-rating answers (4+) are in `AppStore/LISTING.md`.
 
 ## Tests
 

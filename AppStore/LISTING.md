@@ -19,7 +19,7 @@ Publish `docs/` with GitHub Pages first. Apple will reject a 404 or a login-wall
 | Support email | burnrollsupport@gmail.com |
 | Copyright | © 2026 Vitalii Badion |
 
-The in-app Settings screen emails this address and links to the Support URL.
+The support email is shown in Settings and on the public pages. The legal name is App Store Connect metadata only (copyright and review contact). It is not required in the app or on the policy pages.
 
 ## Category
 

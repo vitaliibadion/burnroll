@@ -25,7 +25,6 @@ struct SettingsView: View {
     @State private var isUpdatingReminder = false
     @State private var reminderSnapshot: PhotoLibraryService.ReminderLibrarySnapshot?
     @State private var photoThresholdDraft = Double(CleanupReminderService.defaultPhotoThreshold)
-    @State private var testStatusMessage: String?
 
     var body: some View {
         NavigationStack {
@@ -172,34 +171,6 @@ struct SettingsView: View {
                                 BurnRollTheme.primaryText.opacity(0.055),
                                 in: RoundedRectangle(cornerRadius: 16, style: .continuous)
                             )
-
-                            Button {
-                                Task { await sendTestReminder() }
-                            } label: {
-                                HStack(spacing: 8) {
-                                    BurnRollSymbol(systemName: "bell.badge.fill", size: 15, role: .burn)
-                                    Text("Send test reminder")
-                                    Spacer()
-                                    Text("5 sec")
-                                        .font(.caption.weight(.bold))
-                                        .foregroundStyle(BurnRollTheme.secondaryText)
-                                }
-                                .font(.subheadline.weight(.semibold))
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 12)
-                                .padding(.horizontal, 14)
-                                .background(BurnRollTheme.primaryText.opacity(0.07), in: Capsule())
-                            }
-                            .buttonStyle(.plain)
-                            .disabled(!appState.cleanupReminders.isEnabled || isUpdatingReminder)
-                            .opacity(appState.cleanupReminders.isEnabled ? 1 : 0.45)
-
-                            if let testStatusMessage {
-                                Text(testStatusMessage)
-                                    .font(.caption)
-                                    .foregroundStyle(BurnRollTheme.keep)
-                                    .fixedSize(horizontal: false, vertical: true)
-                            }
                         }
                     }
 
@@ -270,7 +241,7 @@ struct SettingsView: View {
                                 UIApplication.shared.open(BurnRollLegal.supportMailtoURL)
                             } label: {
                                 settingsRow(
-                                    title: "Email \(BurnRollLegal.developerName)",
+                                    title: "Email us",
                                     subtitle: BurnRollLegal.supportEmail,
                                     systemImage: "envelope.fill"
                                 )
@@ -377,7 +348,6 @@ struct SettingsView: View {
                     reminderAlert = .consent
                 } else {
                     appState.cleanupReminders.disable()
-                    testStatusMessage = nil
                     Haptics.threshold()
                 }
             }
@@ -472,7 +442,6 @@ struct SettingsView: View {
                 snapshot: snapshot
             )
             if enabled {
-                testStatusMessage = nil
                 Haptics.keep()
             } else {
                 reminderAlert = .denied
@@ -495,7 +464,6 @@ struct SettingsView: View {
                 rule,
                 snapshot: snapshot
             )
-            testStatusMessage = nil
             if updated {
                 Haptics.threshold()
             } else {
@@ -518,27 +486,11 @@ struct SettingsView: View {
                 snapshot: snapshot
             )
             photoThresholdDraft = Double(appState.cleanupReminders.photoThreshold)
-            testStatusMessage = nil
             if updated {
                 Haptics.threshold()
             } else {
                 reminderAlert = .denied
             }
-        } catch {
-            reminderAlert = .failure(error.localizedDescription)
-        }
-    }
-
-    private func sendTestReminder() async {
-        isUpdatingReminder = true
-        defer { isUpdatingReminder = false }
-
-        do {
-            let snapshot = appState.reminderSnapshot()
-            reminderSnapshot = snapshot
-            try await appState.cleanupReminders.scheduleTest(with: snapshot)
-            testStatusMessage = "Test scheduled. Keep BurnRoll open or move it to the background; the banner will arrive in about 5 seconds."
-            Haptics.keep()
         } catch {
             reminderAlert = .failure(error.localizedDescription)
         }

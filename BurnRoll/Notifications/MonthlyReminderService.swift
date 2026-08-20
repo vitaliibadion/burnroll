@@ -256,34 +256,6 @@ final class CleanupReminderService {
         accumulatedNewPhotos = 0
     }
 
-    func scheduleTest(
-        with snapshot: PhotoLibraryService.ReminderLibrarySnapshot,
-        delay: TimeInterval = 5
-    ) async throws {
-        let settings = await center.notificationSettings()
-        authorizationStatus = settings.authorizationStatus
-        guard settings.authorizationStatus.allowsNotifications else {
-            throw CleanupReminderError.notificationsDisabled
-        }
-
-        let trigger = UNTimeIntervalNotificationTrigger(
-            timeInterval: max(1, delay),
-            repeats: false
-        )
-        let request = UNNotificationRequest(
-            identifier: Self.testRequestIdentifier,
-            content: notificationContent(
-                photoCount: snapshot.recentPhotoCount,
-                usesSpecificCount: snapshot.recentPhotoCount > 0,
-                isTest: true
-            ),
-            trigger: trigger
-        )
-
-        center.removePendingNotificationRequests(withIdentifiers: [Self.testRequestIdentifier])
-        try await center.add(request)
-    }
-
     func disable() {
         center.removePendingNotificationRequests(
             withIdentifiers: [
@@ -415,8 +387,7 @@ final class CleanupReminderService {
             identifier: Self.requestIdentifier,
             content: notificationContent(
                 photoCount: plan.photoCountForBody,
-                usesSpecificCount: plan.usesSpecificCount,
-                isTest: false
+                usesSpecificCount: plan.usesSpecificCount
             ),
             trigger: trigger
         )
@@ -440,13 +411,10 @@ final class CleanupReminderService {
 
     private func notificationContent(
         photoCount: Int,
-        usesSpecificCount: Bool,
-        isTest: Bool
+        usesSpecificCount: Bool
     ) -> UNMutableNotificationContent {
         let content = UNMutableNotificationContent()
-        content.title = isTest
-            ? "Test · Smart BurnRoll reminder"
-            : "Ready for a quick cleanup?"
+        content.title = "Ready for a quick cleanup?"
         content.body = notificationBody(
             photoCount: photoCount,
             usesSpecificCount: usesSpecificCount
@@ -531,7 +499,7 @@ private enum CleanupReminderError: LocalizedError {
     case notificationsDisabled
 
     var errorDescription: String? {
-        "Notifications are disabled for BurnRoll. Enable them in iOS Settings to send a test reminder."
+        "Notifications are disabled for BurnRoll. Enable them in iOS Settings to use cleanup reminders."
     }
 }
 
