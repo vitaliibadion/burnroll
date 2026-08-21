@@ -20,15 +20,16 @@ struct PrimaryButton: View {
                 Text(title)
             }
             .font(.headline)
+            .foregroundStyle(.white)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 17)
+            .background(
+                Capsule(style: .continuous)
+                    .fill(isEnabled ? BurnRollTheme.burn : Color.secondary.opacity(0.5))
+            )
+            .contentShape(Capsule())
         }
         .buttonStyle(.plain)
-        .foregroundStyle(.white)
-        .background(
-            Capsule(style: .continuous)
-                .fill(isEnabled ? BurnRollTheme.burn : Color.secondary.opacity(0.5))
-        )
         .disabled(!isEnabled)
     }
 }

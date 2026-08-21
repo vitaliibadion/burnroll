@@ -38,7 +38,7 @@ enum BurnRollLegal {
         ),
         PolicySection(
             title: "On-device preferences",
-            text: "BurnRoll also stores onboarding status, haptic and reminder choices, cleanup counts, size estimates and review durations, and the date of your last confirmed cleanup for streak calculation. There is no BurnRoll account. These preferences remain on the device until you change them, reset the review bookmark, reset the app, or delete the app."
+            text: "BurnRoll also stores onboarding status, whether the first-run swipe hint has been shown, haptic and reminder choices, cleanup counts, size estimates and review durations, and the date of your last confirmed cleanup for streak calculation. The Home Screen icon you pick is stored by iOS on this device. There is no BurnRoll account. These preferences remain on the device until you change them, reset the review bookmark, reset the app, or delete the app."
         ),
         PolicySection(
             title: "Analytics",

@@ -8,7 +8,10 @@ struct RootView: View {
         Group {
             switch appState.route {
             case .onboarding:
-                OnboardingView {
+                OnboardingView(
+                    isReplay: appState.isReplayingOnboarding,
+                    hasReviewedMedia: appState.hasReviewedMedia
+                ) {
                     appState.finishOnboarding()
                 }
             case .authorization:
@@ -20,6 +23,13 @@ struct RootView: View {
             }
         }
         .animation(.snappy(duration: 0.38), value: appState.route)
+        .overlay {
+            if appState.isShowingLaunchFire {
+                LaunchFireView()
+                    .transition(.opacity)
+            }
+        }
+        .animation(.easeOut(duration: 0.42), value: appState.isShowingLaunchFire)
         .onChange(of: scenePhase, initial: true) { _, phase in
             switch phase {
             case .active:
@@ -28,7 +38,7 @@ struct RootView: View {
                     if appState.route == .authorization {
                         await appState.bootstrap()
                     }
-                    await appState.refreshCleanupReminder()
+                    await appState.handlePhotoLibraryChange()
                 }
             case .background, .inactive:
                 appState.endReviewSessionIfNeeded()

@@ -26,6 +26,7 @@ final class AppState {
 
     private enum DefaultsKey {
         static let completedOnboarding = "completedOnboarding"
+        static let hasCompletedSwipeHint = "hasCompletedSwipeHint"
         static let lastCleanupItemCount = "lastCleanupItemCount"
         static let lastCleanupClearedBytes = "lastCleanupClearedBytes"
         static let lastCleanupReviewDuration = "lastCleanupReviewDuration"
@@ -44,6 +45,11 @@ final class AppState {
     private let reviewCheckpointStore: ReviewCheckpointStore
 
     var route: Route
+    private(set) var isShowingLaunchFire = true
+    private(set) var isReplayingOnboarding = false
+    private(set) var hasCompletedSwipeHint: Bool
+    private(set) var pendingSwipeHint = false
+    private(set) var swipeHintGeneration = 0
     var session = SessionState()
     var authorizationStatus = PhotoAuthorizationService.status
     var isLoadingLibrary = false
@@ -68,6 +74,7 @@ final class AppState {
     )
     private var cleanupStreak = CleanupStreak()
     private var photoLibraryChangeObserver: (any NSObjectProtocol)?
+    private var routeAfterOnboardingReplay: Route = .welcome
 
     init(
         defaults: UserDefaults = .standard,
@@ -77,6 +84,7 @@ final class AppState {
         self.reviewCheckpointStore = reviewCheckpointStore
         reviewedAssetIdentifiers = reviewCheckpointStore.load()
         cleanupReminders = CleanupReminderService(defaults: defaults)
+        hasCompletedSwipeHint = defaults.bool(forKey: DefaultsKey.hasCompletedSwipeHint)
         route = defaults.bool(forKey: DefaultsKey.completedOnboarding)
             ? .authorization
             : .onboarding
@@ -139,13 +147,32 @@ final class AppState {
             queue: .main
         ) { [weak self] _ in
             Task { @MainActor in
-                await self?.refreshCleanupReminder()
+                await self?.handlePhotoLibraryChange()
             }
         }
     }
 
     var currentAsset: MediaAsset? {
         photoLibrary.mediaAsset(at: session.currentIndex)
+    }
+
+    var hasReviewedMedia: Bool {
+        !reviewedAssetIdentifiers.isEmpty || session.reviewedCount > 0
+    }
+
+    var shouldPlaySwipeHint: Bool {
+        pendingSwipeHint || (!hasCompletedSwipeHint && !hasReviewedMedia)
+    }
+
+    func completeSwipeHint() {
+        pendingSwipeHint = false
+        guard !hasCompletedSwipeHint else { return }
+        hasCompletedSwipeHint = true
+        defaults.set(true, forKey: DefaultsKey.hasCompletedSwipeHint)
+    }
+
+    func finishLaunchFire() {
+        isShowingLaunchFire = false
     }
 
     func bootstrap() async {
@@ -158,10 +185,42 @@ final class AppState {
         }
     }
 
+    func replayOnboarding() {
+        guard route != .onboarding else { return }
+        routeAfterOnboardingReplay = route
+        isReplayingOnboarding = true
+        route = .onboarding
+    }
+
     func finishOnboarding() {
         defaults.set(true, forKey: DefaultsKey.completedOnboarding)
+
+        if isReplayingOnboarding {
+            isReplayingOnboarding = false
+            pendingSwipeHint = true
+            swipeHintGeneration += 1
+            restoreRouteAfterOnboardingReplay()
+            return
+        }
+
         AnalyticsService.log(.onboardingCompleted)
         route = .authorization
+    }
+
+    private func restoreRouteAfterOnboardingReplay() {
+        let destination = routeAfterOnboardingReplay
+        routeAfterOnboardingReplay = .welcome
+
+        switch destination {
+        case .cleaner, .welcome:
+            route = destination
+        case .authorization, .onboarding:
+            if PhotoAuthorizationService.hasUsableAccess {
+                loadLibraryAndShowWelcome()
+            } else {
+                route = .authorization
+            }
+        }
     }
 
     func requestPhotoAccess() async {
@@ -175,7 +234,16 @@ final class AppState {
                 .photoPermissionGranted,
                 parameters: ["authorization_status": authorizationAnalyticsValue]
             )
+            photoLibrary.startObservingLibraryChanges()
             loadLibraryAndShowWelcome()
+            if authorizationStatus == .limited {
+                try? await Task.sleep(for: .milliseconds(350))
+                reloadVisibleLibrary()
+                if photoLibrary.itemCount(for: .all) == 0 {
+                    await PhotoAuthorizationService.presentLimitedLibraryPicker()
+                    reloadVisibleLibrary()
+                }
+            }
         case .denied, .restricted:
             AnalyticsService.log(
                 .photoPermissionDenied,
@@ -192,6 +260,40 @@ final class AppState {
 
     func refreshPhotoAuthorizationStatus() {
         authorizationStatus = PhotoAuthorizationService.status
+    }
+
+    func handlePhotoLibraryChange() async {
+        authorizationStatus = PhotoAuthorizationService.status
+        guard PhotoAuthorizationService.hasUsableAccess else { return }
+
+        if authorizationStatus == .limited || photoLibrary.itemCount(for: .all) == 0 {
+            reloadVisibleLibrary()
+        }
+
+        await refreshCleanupReminder()
+    }
+
+    func reloadVisibleLibrary() {
+        guard PhotoAuthorizationService.hasUsableAccess else { return }
+
+        let shouldResetSession = route != .cleaner || photoLibrary.itemCount(for: .all) == 0
+
+        photoLibrary.loadNewestFirst(
+            source: photoLibrary.selectedSource,
+            reviewScope: photoLibrary.selectedReviewScope,
+            reviewedAssetIdentifiers: reviewedAssetIdentifiers,
+            refreshCatalog: true
+        )
+
+        if shouldResetSession {
+            if route == .cleaner {
+                session.beginReviewingSource(totalAssetCount: photoLibrary.assetCount)
+            } else {
+                session.reset(totalAssetCount: photoLibrary.assetCount)
+            }
+        }
+
+        updateCrashlyticsContext()
     }
 
     func refreshCleanupReminder() async {
@@ -215,13 +317,14 @@ final class AppState {
 
     func loadLibraryAndShowWelcome() {
         isLoadingLibrary = true
+        photoLibrary.startObservingLibraryChanges()
         photoLibrary.loadNewestFirst(
-            reviewedAssetIdentifiers: reviewedAssetIdentifiers
+            reviewedAssetIdentifiers: reviewedAssetIdentifiers,
+            refreshCatalog: true
         )
         session.reset(totalAssetCount: photoLibrary.assetCount)
         isLoadingLibrary = false
         updateCrashlyticsContext()
-        photoLibrary.startObservingLibraryChanges()
         route = .welcome
     }
 
@@ -264,6 +367,7 @@ final class AppState {
 
     func decide(_ decision: ReviewDecision) {
         guard let currentAsset else { return }
+        completeSwipeHint()
         session.beginReviewTiming(at: Date())
         session.decide(decision, asset: currentAsset)
         markReviewed(currentAsset.id)

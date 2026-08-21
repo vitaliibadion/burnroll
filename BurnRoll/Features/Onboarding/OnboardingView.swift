@@ -6,34 +6,90 @@ struct OnboardingView: View {
         let title: String
         let message: String
         let accent: Color
+        let role: BurnRollSymbolRole
     }
 
-    private let pages = [
-        Page(
-            symbol: "photo.stack.fill",
-            title: "Burn the clutter.\nKeep the memories.",
-            message: "Clear your camera roll one thoughtful decision at a time.",
-            accent: BurnRollTheme.burn
-        ),
-        Page(
-            symbol: "hand.draw.fill",
-            title: "Swipe. Decide. Done.",
-            message: "Swipe left to Burn. Swipe right to Keep.",
-            accent: BurnRollTheme.keep
-        ),
-        Page(
-            symbol: "checkmark.shield.fill",
-            title: "Nothing burns by accident.",
-            message: "Review everything before deletion.",
-            accent: BurnRollTheme.ember
-        )
-    ]
-
+    var isReplay: Bool = false
+    var hasReviewedMedia: Bool = false
     let onComplete: () -> Void
     @State private var pageIndex = 0
 
+    private var pages: [Page] {
+        [
+            Page(
+                symbol: "photo.stack.fill",
+                title: isReplay
+                    ? "A quick refresher."
+                    : "Burn the clutter.\nKeep the memories.",
+                message: isReplay
+                    ? (hasReviewedMedia
+                        ? "Your reviewed items stay marked. This is just a reminder of how BurnRoll works."
+                        : "Swipe through your camera roll one decision at a time. Your library and settings stay as they are.")
+                    : "Clear your camera roll one thoughtful decision at a time.",
+                accent: BurnRollTheme.burn,
+                role: .burn
+            ),
+            Page(
+                symbol: "hand.draw.fill",
+                title: "Swipe. Decide. Done.",
+                message: "Swipe left to Burn. Swipe right to Keep. The first photo will show you both.",
+                accent: BurnRollTheme.keep,
+                role: .keep
+            ),
+            Page(
+                symbol: "arrow.uturn.backward",
+                title: "Undo a Keep or Burn.",
+                message: "The middle button takes back your last decision. That item leaves Reviewed and the burn list, so you can choose again.",
+                accent: BurnRollTheme.ember,
+                role: .neutral
+            ),
+            Page(
+                symbol: "checkmark.shield.fill",
+                title: "Nothing burns by accident.",
+                message: hasReviewedMedia
+                    ? "Items you've already reviewed stay marked. Confirm again before anything is deleted."
+                    : "Review everything before deletion.",
+                accent: BurnRollTheme.ember,
+                role: .keep
+            )
+        ]
+    }
+
+    private var isLastPage: Bool {
+        pageIndex == pages.count - 1
+    }
+
+    private var primaryTitle: String {
+        if isLastPage {
+            isReplay ? "Got it" : "Continue to Photos"
+        } else {
+            "Continue"
+        }
+    }
+
+    private var primarySystemImage: String {
+        if isLastPage {
+            isReplay ? "checkmark" : "photo.on.rectangle"
+        } else {
+            "arrow.right"
+        }
+    }
+
     var body: some View {
         VStack(spacing: 0) {
+            if isReplay {
+                HStack {
+                    Spacer()
+                    Button("Close") {
+                        onComplete()
+                    }
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(BurnRollTheme.secondaryText)
+                }
+                .padding(.horizontal, 24)
+                .padding(.top, 12)
+            }
+
             TabView(selection: $pageIndex) {
                 ForEach(pages.indices, id: \.self) { index in
                     page(pages[index])
@@ -44,10 +100,10 @@ struct OnboardingView: View {
             .animation(.smooth, value: pageIndex)
 
             PrimaryButton(
-                title: pageIndex == pages.count - 1 ? "Continue to Photos" : "Continue",
-                systemImage: pageIndex == pages.count - 1 ? "photo.on.rectangle" : "arrow.right"
+                title: primaryTitle,
+                systemImage: primarySystemImage
             ) {
-                if pageIndex == pages.count - 1 {
+                if isLastPage {
                     onComplete()
                 } else {
                     withAnimation(.snappy) {
@@ -57,10 +113,13 @@ struct OnboardingView: View {
             }
             .padding(.horizontal, 24)
             .padding(.bottom, 18)
+            .zIndex(1)
         }
         .burnRollBackground()
         .onAppear {
-            AnalyticsService.log(.onboardingStarted)
+            if !isReplay {
+                AnalyticsService.log(.onboardingStarted)
+            }
         }
     }
 
@@ -85,7 +144,7 @@ struct OnboardingView: View {
                         systemName: page.symbol,
                         size: 76,
                         weight: .medium,
-                        role: page.symbol == "checkmark.shield.fill" ? .keep : .burn
+                        role: page.role
                     )
                 }
             }

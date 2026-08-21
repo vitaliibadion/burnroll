@@ -25,6 +25,9 @@ struct SettingsView: View {
     @State private var isUpdatingReminder = false
     @State private var reminderSnapshot: PhotoLibraryService.ReminderLibrarySnapshot?
     @State private var photoThresholdDraft = Double(CleanupReminderService.defaultPhotoThreshold)
+    @State private var selectedAppIcon = AppIconService.current
+    @State private var isChangingAppIcon = false
+    @State private var appIconErrorMessage: String?
 
     var body: some View {
         NavigationStack {
@@ -40,16 +43,38 @@ struct SettingsView: View {
                     }
 
                     settingsSection(title: "Experience") {
-                        Toggle(isOn: $hapticsEnabled) {
-                            settingLabel(
-                                title: "Haptic feedback",
-                                subtitle: "Feel decisions, undo, and successful deletion",
-                                systemImage: "waveform.path"
-                            )
-                        }
-                        .tint(BurnRollTheme.burn)
-                        .onChange(of: hapticsEnabled) { _, enabled in
-                            if enabled { Haptics.keep() }
+                        VStack(alignment: .leading, spacing: 16) {
+                            Toggle(isOn: $hapticsEnabled) {
+                                settingLabel(
+                                    title: "Haptic feedback",
+                                    subtitle: "Feel decisions, undo, and successful deletion",
+                                    systemImage: "waveform.path"
+                                )
+                            }
+                            .tint(BurnRollTheme.burn)
+                            .onChange(of: hapticsEnabled) { _, enabled in
+                                if enabled { Haptics.keep() }
+                            }
+
+                            Divider()
+                                .overlay(BurnRollTheme.primaryText.opacity(0.08))
+
+                            appIconPicker
+
+                            Divider()
+                                .overlay(BurnRollTheme.primaryText.opacity(0.08))
+
+                            Button {
+                                appState.replayOnboarding()
+                                dismiss()
+                            } label: {
+                                settingsRow(
+                                    title: "How to use BurnRoll",
+                                    subtitle: "Replay the intro. Your reviews and Photos access stay as they are.",
+                                    systemImage: "sparkles.rectangle.stack"
+                                )
+                            }
+                            .buttonStyle(.plain)
                         }
                     }
 
@@ -291,6 +316,7 @@ struct SettingsView: View {
         .onAppear {
             appState.refreshPhotoAuthorizationStatus()
             photoThresholdDraft = Double(appState.cleanupReminders.photoThreshold)
+            selectedAppIcon = AppIconService.current
             refreshReminderSnapshot()
             Task {
                 await appState.cleanupReminders.refreshAuthorizationStatus()
@@ -503,6 +529,79 @@ struct SettingsView: View {
         }
 
         reminderSnapshot = appState.reminderSnapshot()
+    }
+
+    private var appIconPicker: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            settingLabel(
+                title: "App icon",
+                subtitle: "Choose how BurnRoll looks on your Home Screen. iOS will ask you to confirm.",
+                systemImage: "app.fill"
+            )
+
+            HStack(spacing: 12) {
+                ForEach(AppIconOption.allCases) { option in
+                    Button {
+                        Task { await selectAppIcon(option) }
+                    } label: {
+                        VStack(spacing: 8) {
+                            Image(option.previewImageName)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 72, height: 72)
+                                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                                .overlay {
+                                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                        .strokeBorder(
+                                            selectedAppIcon == option
+                                                ? BurnRollTheme.keep
+                                                : Color.white.opacity(0.10),
+                                            lineWidth: selectedAppIcon == option ? 3 : 1
+                                        )
+                                }
+                                .shadow(color: .black.opacity(0.22), radius: 8, y: 4)
+
+                            HStack(spacing: 4) {
+                                if selectedAppIcon == option {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .foregroundStyle(BurnRollTheme.keep)
+                                }
+                                Text(option.title)
+                                    .foregroundStyle(BurnRollTheme.primaryText)
+                            }
+                            .font(.caption.weight(.semibold))
+                        }
+                        .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(isChangingAppIcon)
+                    .accessibilityAddTraits(selectedAppIcon == option ? .isSelected : [])
+                    .accessibilityLabel("\(option.title) app icon")
+                }
+            }
+
+            if let appIconErrorMessage {
+                Text(appIconErrorMessage)
+                    .font(.caption)
+                    .foregroundStyle(BurnRollTheme.burn)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
+    private func selectAppIcon(_ option: AppIconOption) async {
+        guard option != selectedAppIcon else { return }
+        appIconErrorMessage = nil
+        isChangingAppIcon = true
+        defer { isChangingAppIcon = false }
+
+        do {
+            try await AppIconService.set(option)
+            selectedAppIcon = AppIconService.current
+        } catch {
+            selectedAppIcon = AppIconService.current
+            appIconErrorMessage = "Couldn't change the Home Screen icon. Try again on a device."
+        }
     }
 
     private func settingsSection<Content: View>(

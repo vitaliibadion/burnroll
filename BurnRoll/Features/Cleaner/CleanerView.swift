@@ -34,10 +34,12 @@ struct CleanerView: View {
                     SwipeMediaCard(
                         library: appState.photoLibrary,
                         asset: asset,
+                        playsSwipeHint: appState.shouldPlaySwipeHint,
                         onOpen: { viewerAsset = asset },
-                        onDecision: appState.decide
+                        onDecision: appState.decide,
+                        onSwipeHintFinished: appState.completeSwipeHint
                     )
-                    .id(asset.id)
+                    .id("\(asset.id)-\(appState.swipeHintGeneration)")
                     .transition(.opacity.combined(with: .scale(scale: 0.97)))
                 } else {
                     emptyState
@@ -122,27 +124,35 @@ struct CleanerView: View {
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(BurnRollTheme.secondaryText)
                     .lineLimit(1)
-                    .minimumScaleFactor(0.75)
+                    .minimumScaleFactor(0.7)
+                    .truncationMode(.tail)
                 Text(appState.session.estimatedBytes.formattedByteCount)
                     .font(.title2.weight(.bold))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
                     .contentTransition(.numericText())
             }
-
-            Spacer()
+            .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
 
             Button {
                 sheetDestination = .review
             } label: {
-                HStack(spacing: 7) {
+                HStack(spacing: 6) {
                     BurnRollSymbol(systemName: "photo.stack.fill", size: 16, role: .photo)
                     Text("Review \(appState.session.reviewHistory.count)")
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
                 }
-                    .font(.subheadline.weight(.bold))
-                    .foregroundStyle(BurnRollTheme.primaryText)
-                    .padding(.horizontal, 13)
-                    .padding(.vertical, 11)
-                    .background(BurnRollTheme.surface, in: Capsule())
+                .font(.subheadline.weight(.bold))
+                .foregroundStyle(BurnRollTheme.primaryText)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 11)
+                .background(BurnRollTheme.surface, in: Capsule())
+                .contentShape(Capsule())
             }
+            .buttonStyle(.plain)
+            .fixedSize(horizontal: true, vertical: false)
+            .layoutPriority(1)
             .accessibilityLabel("Review history, \(appState.session.reviewHistory.count) decisions")
         }
     }
@@ -201,6 +211,7 @@ struct CleanerView: View {
             .frame(maxWidth: .infinity)
             .padding(.vertical, 15)
             .background(color, in: Capsule())
+            .contentShape(Capsule())
         }
         .buttonStyle(.plain)
         .disabled(appState.currentAsset == nil)

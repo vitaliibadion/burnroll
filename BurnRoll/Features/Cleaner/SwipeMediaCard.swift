@@ -3,16 +3,20 @@ import SwiftUI
 struct SwipeMediaCard: View {
     let library: PhotoLibraryService
     let asset: MediaAsset
+    var playsSwipeHint = false
     let onOpen: () -> Void
     let onDecision: (ReviewDecision) -> Void
+    var onSwipeHintFinished: () -> Void = {}
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.displayScale) private var displayScale
     @State private var offsetX: CGFloat = .zero
     @State private var crossedThreshold = false
     @State private var isCommitting = false
+    @State private var isPlayingHint = false
 
     private let commitThreshold: CGFloat = 105
+    private let hintOffset: CGFloat = 82
 
     var body: some View {
         GeometryReader { proxy in
@@ -57,6 +61,10 @@ struct SwipeMediaCard: View {
             .shadow(color: .black.opacity(0.16), radius: 18, y: 10)
             .contentShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
             .onTapGesture {
+                if isPlayingHint {
+                    skipSwipeHint()
+                    return
+                }
                 guard !isCommitting else { return }
                 onOpen()
             }
@@ -72,6 +80,9 @@ struct SwipeMediaCard: View {
             }
             .accessibilityAction(named: "Burn photo") {
                 commit(.burn, containerWidth: proxy.size.width)
+            }
+            .task(id: "\(asset.id)-\(playsSwipeHint)") {
+                await playSwipeHintIfNeeded()
             }
         }
     }
@@ -91,12 +102,12 @@ struct SwipeMediaCard: View {
         ZStack {
             LinearGradient(
                 colors: [edgeColor.opacity(progress * 0.48), .clear],
-                startPoint: offsetX > 0 ? .trailing : .leading,
-                endPoint: offsetX > 0 ? .leading : .trailing
+                startPoint: offsetX > 0 ? .leading : .trailing,
+                endPoint: offsetX > 0 ? .trailing : .leading
             )
 
             HStack {
-                if offsetX > 0 { Spacer() }
+                if offsetX <= 0 { Spacer() }
 
                 HStack(spacing: 8) {
                     BurnRollSymbol(
@@ -117,7 +128,7 @@ struct SwipeMediaCard: View {
                 .padding(22)
                 .frame(maxHeight: .infinity, alignment: .top)
 
-                if offsetX <= 0 { Spacer() }
+                if offsetX > 0 { Spacer() }
             }
         }
         .allowsHitTesting(false)
@@ -126,6 +137,9 @@ struct SwipeMediaCard: View {
     private func dragGesture(containerWidth: CGFloat) -> some Gesture {
         DragGesture(minimumDistance: 12)
             .onChanged { value in
+                if isPlayingHint {
+                    skipSwipeHint(resetOffset: false)
+                }
                 guard !isCommitting else { return }
                 guard abs(value.translation.width) >= abs(value.translation.height) else {
                     if offsetX != 0 {
@@ -163,6 +177,7 @@ struct SwipeMediaCard: View {
 
     private func commit(_ decision: ReviewDecision, containerWidth: CGFloat) {
         guard !isCommitting else { return }
+        isPlayingHint = false
         isCommitting = true
 
         switch decision {
@@ -184,5 +199,58 @@ struct SwipeMediaCard: View {
             crossedThreshold = false
             isCommitting = false
         }
+    }
+
+    private func playSwipeHintIfNeeded() async {
+        guard playsSwipeHint, !isCommitting else { return }
+
+        if reduceMotion {
+            onSwipeHintFinished()
+            return
+        }
+
+        try? await Task.sleep(for: .milliseconds(650))
+        guard !Task.isCancelled, playsSwipeHint, !isCommitting else { return }
+
+        isPlayingHint = true
+
+        await nudgeCard(to: -hintOffset)
+        guard isPlayingHint, !Task.isCancelled else { return }
+        Haptics.threshold()
+        try? await Task.sleep(for: .milliseconds(900))
+
+        await nudgeCard(to: 0)
+        guard isPlayingHint, !Task.isCancelled else { return }
+        try? await Task.sleep(for: .milliseconds(280))
+
+        await nudgeCard(to: hintOffset)
+        guard isPlayingHint, !Task.isCancelled else { return }
+        Haptics.threshold()
+        try? await Task.sleep(for: .milliseconds(900))
+
+        await nudgeCard(to: 0)
+        guard isPlayingHint, !Task.isCancelled else { return }
+
+        isPlayingHint = false
+        onSwipeHintFinished()
+    }
+
+    private func nudgeCard(to value: CGFloat) async {
+        guard isPlayingHint, !Task.isCancelled else { return }
+        withAnimation(.spring(response: 0.52, dampingFraction: 0.82)) {
+            offsetX = value
+        }
+        try? await Task.sleep(for: .milliseconds(520))
+    }
+
+    private func skipSwipeHint(resetOffset: Bool = true) {
+        guard isPlayingHint else { return }
+        isPlayingHint = false
+        if resetOffset {
+            withAnimation(.spring(response: 0.38, dampingFraction: 0.78)) {
+                offsetX = 0
+            }
+        }
+        onSwipeHintFinished()
     }
 }
