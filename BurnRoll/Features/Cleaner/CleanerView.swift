@@ -149,24 +149,25 @@ struct CleanerView: View {
 
     private var bottomBar: some View {
         HStack(spacing: 12) {
+            decisionButton(
+                title: "Keep",
+                systemImage: "heart.fill",
+                color: BurnRollTheme.keep,
+                decision: .keep
+            )
+
             Button {
                 appState.undo()
                 Haptics.undo()
             } label: {
-                HStack(spacing: 8) {
-                    BurnRollSymbol(systemName: "arrow.uturn.backward", size: 17, role: .neutral)
-                    Text("Undo")
-                }
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 15)
-                    .background(BurnRollTheme.surface, in: Capsule())
+                BurnRollSymbol(systemName: "arrow.uturn.backward", size: 18, role: .neutral)
+                    .frame(width: 52, height: 52)
+                    .background(BurnRollTheme.surface, in: Circle())
             }
             .buttonStyle(.plain)
             .disabled(appState.session.lastAction == nil)
             .opacity(appState.session.lastAction == nil ? 0.4 : 1)
-
-            keepButton
+            .accessibilityLabel("Undo last decision")
 
             decisionButton(
                 title: "Burn",
@@ -175,47 +176,6 @@ struct CleanerView: View {
                 decision: .burn
             )
         }
-    }
-
-    private var keepButton: some View {
-        Button {
-            appState.decide(.keep)
-            Haptics.keep()
-        } label: {
-            VStack(spacing: 5) {
-                BurnRollSymbol(
-                    systemName: "heart.fill",
-                    size: 28,
-                    weight: .black,
-                    role: .light
-                )
-                .frame(width: 62, height: 62)
-                .background(
-                    LinearGradient(
-                        colors: [Color(red: 0.59, green: 0.78, blue: 0.22), BurnRollTheme.keep],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    ),
-                    in: Circle()
-                )
-                .overlay {
-                    Circle()
-                        .strokeBorder(.white.opacity(0.18), lineWidth: 1)
-                }
-                .shadow(color: BurnRollTheme.keep.opacity(0.32), radius: 11, y: 6)
-
-                Text("Keep")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(BurnRollTheme.primaryText)
-            }
-            .frame(width: 72)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .disabled(appState.currentAsset == nil)
-        .opacity(appState.currentAsset == nil ? 0.4 : 1)
-        .accessibilityLabel("Keep current item")
-        .accessibilityHint("Keeps the current photo or video and moves to the next item")
     }
 
     private func decisionButton(

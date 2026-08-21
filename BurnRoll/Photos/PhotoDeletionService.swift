@@ -7,11 +7,62 @@ enum PhotoDeletionService {
         let unavailableIdentifiers: Set<String>
     }
 
-    enum DeletionError: LocalizedError {
+    enum DeletionError: LocalizedError, Equatable {
         case noAssetsFound
+        case userCancelled
+        case failed
 
         var errorDescription: String? {
-            "The selected items could not be found in the Photos library."
+            switch self {
+            case .noAssetsFound:
+                "The selected items could not be found in the Photos library."
+            case .userCancelled:
+                "Deletion was cancelled. Your burn queue is unchanged."
+            case .failed:
+                "Photos couldn’t complete the deletion. Try again, and confirm Delete on the system sheet."
+            }
+        }
+
+        var isUserCancellation: Bool { self == .userCancelled }
+
+        static func from(_ error: Error) -> DeletionError {
+            if let deletionError = error as? DeletionError {
+                return deletionError
+            }
+
+            if error is CancellationError {
+                return .userCancelled
+            }
+
+            if isUserCancelledPhotosError(error) {
+                return .userCancelled
+            }
+
+            return .failed
+        }
+
+        private static func isUserCancelledPhotosError(_ error: Error) -> Bool {
+            var current: NSError? = error as NSError
+            var seen = Set<ObjectIdentifier>()
+
+            while let nsError = current {
+                let identity = ObjectIdentifier(nsError)
+                guard seen.insert(identity).inserted else { break }
+
+                if nsError.code == CocoaError.userCancelled.rawValue
+                    || nsError.code == PHPhotosError.userCancelled.rawValue {
+                    return true
+                }
+
+                if nsError.domain == PHPhotosErrorDomain,
+                   nsError.code == PHPhotosError.userCancelled.rawValue {
+                    return true
+                }
+
+                current = nsError.userInfo[NSUnderlyingErrorKey] as? NSError
+            }
+
+            return false
         }
     }
 
@@ -25,8 +76,12 @@ enum PhotoDeletionService {
             foundIdentifiers.insert(asset.localIdentifier)
         }
 
-        try await PHPhotoLibrary.shared().performChanges {
-            PHAssetChangeRequest.deleteAssets(assets)
+        do {
+            try await PHPhotoLibrary.shared().performChanges {
+                PHAssetChangeRequest.deleteAssets(assets)
+            }
+        } catch {
+            throw DeletionError.from(error)
         }
 
         return DeletionResult(

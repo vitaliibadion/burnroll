@@ -8,7 +8,7 @@ struct SwipeMediaCard: View {
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.displayScale) private var displayScale
-    @State private var offset: CGSize = .zero
+    @State private var offsetX: CGFloat = .zero
     @State private var crossedThreshold = false
     @State private var isCommitting = false
 
@@ -16,7 +16,7 @@ struct SwipeMediaCard: View {
 
     var body: some View {
         GeometryReader { proxy in
-            let progress = min(abs(offset.width) / commitThreshold, 1)
+            let progress = min(abs(offsetX) / commitThreshold, 1)
             let isPortrait = asset.pixelHeight > asset.pixelWidth
 
             VStack(spacing: 0) {
@@ -31,8 +31,10 @@ struct SwipeMediaCard: View {
                             ),
                             contentMode: isPortrait ? .fill : .fit
                         )
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .padding(.horizontal, isPortrait ? 0 : 8)
                         .padding(.top, isPortrait ? 0 : 8)
+                        .clipped()
                     }
                     .overlay {
                         decisionTint(progress: progress)
@@ -46,6 +48,7 @@ struct SwipeMediaCard: View {
             .frame(width: proxy.size.width, height: proxy.size.height)
             .background(BurnRollTheme.surface)
             .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
+            .compositingGroup()
             .overlay {
                 RoundedRectangle(cornerRadius: 30, style: .continuous)
                     .strokeBorder(edgeColor.opacity(progress * 0.9), lineWidth: 3)
@@ -57,8 +60,8 @@ struct SwipeMediaCard: View {
                 guard !isCommitting else { return }
                 onOpen()
             }
-            .offset(offset)
-            .rotationEffect(.degrees(reduceMotion ? 0 : Double(offset.width / 30)))
+            .offset(x: offsetX)
+            .rotationEffect(.degrees(reduceMotion ? 0 : Double(offsetX / 30)))
             .scaleEffect(reduceMotion ? 1 : 1 - progress * 0.025)
             .gesture(dragGesture(containerWidth: proxy.size.width))
             .accessibilityElement(children: .combine)
@@ -74,8 +77,8 @@ struct SwipeMediaCard: View {
     }
 
     private var edgeColor: Color {
-        guard offset.width != 0 else { return .clear }
-        return offset.width > 0 ? BurnRollTheme.keep : BurnRollTheme.burn
+        guard offsetX != 0 else { return .clear }
+        return offsetX > 0 ? BurnRollTheme.keep : BurnRollTheme.burn
     }
 
     private var accessibilityDescription: String {
@@ -88,21 +91,21 @@ struct SwipeMediaCard: View {
         ZStack {
             LinearGradient(
                 colors: [edgeColor.opacity(progress * 0.48), .clear],
-                startPoint: offset.width > 0 ? .trailing : .leading,
-                endPoint: offset.width > 0 ? .leading : .trailing
+                startPoint: offsetX > 0 ? .trailing : .leading,
+                endPoint: offsetX > 0 ? .leading : .trailing
             )
 
             HStack {
-                if offset.width > 0 { Spacer() }
+                if offsetX > 0 { Spacer() }
 
                 HStack(spacing: 8) {
                     BurnRollSymbol(
-                        systemName: offset.width > 0 ? "heart.fill" : "flame.fill",
+                        systemName: offsetX > 0 ? "heart.fill" : "flame.fill",
                         size: 19,
                         weight: .black,
                         role: .light
                     )
-                    Text(offset.width > 0 ? "KEEP" : "BURN")
+                    Text(offsetX > 0 ? "KEEP" : "BURN")
                 }
                 .font(.title2.weight(.black))
                 .foregroundStyle(.white)
@@ -114,17 +117,25 @@ struct SwipeMediaCard: View {
                 .padding(22)
                 .frame(maxHeight: .infinity, alignment: .top)
 
-                if offset.width <= 0 { Spacer() }
+                if offsetX <= 0 { Spacer() }
             }
         }
         .allowsHitTesting(false)
     }
 
     private func dragGesture(containerWidth: CGFloat) -> some Gesture {
-        DragGesture(minimumDistance: 8)
+        DragGesture(minimumDistance: 12)
             .onChanged { value in
                 guard !isCommitting else { return }
-                offset = CGSize(width: value.translation.width, height: value.translation.height * 0.18)
+                guard abs(value.translation.width) >= abs(value.translation.height) else {
+                    if offsetX != 0 {
+                        offsetX = 0
+                        crossedThreshold = false
+                    }
+                    return
+                }
+
+                offsetX = value.translation.width
 
                 let isPastThreshold = abs(value.translation.width) >= commitThreshold
                 if isPastThreshold && !crossedThreshold {
@@ -136,14 +147,17 @@ struct SwipeMediaCard: View {
             }
             .onEnded { value in
                 guard !isCommitting else { return }
-                if abs(value.translation.width) >= commitThreshold {
-                    commit(value.translation.width > 0 ? .keep : .burn, containerWidth: containerWidth)
-                } else {
+                guard abs(value.translation.width) >= abs(value.translation.height),
+                      abs(value.translation.width) >= commitThreshold
+                else {
                     withAnimation(.spring(response: 0.38, dampingFraction: 0.78)) {
-                        offset = .zero
+                        offsetX = 0
                     }
                     crossedThreshold = false
+                    return
                 }
+
+                commit(value.translation.width > 0 ? .keep : .burn, containerWidth: containerWidth)
             }
     }
 
@@ -160,13 +174,13 @@ struct SwipeMediaCard: View {
         let duration = reduceMotion ? 0.08 : 0.44
 
         withAnimation(.easeIn(duration: duration)) {
-            offset = CGSize(width: direction * max(containerWidth * 1.5, 520), height: 18)
+            offsetX = direction * max(containerWidth * 1.5, 520)
         }
 
         Task { @MainActor in
             try? await Task.sleep(for: .seconds(duration * 0.72))
             onDecision(decision)
-            offset = .zero
+            offsetX = 0
             crossedThreshold = false
             isCommitting = false
         }

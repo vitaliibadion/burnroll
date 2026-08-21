@@ -80,6 +80,7 @@ struct MediaViewer: View {
                         anchor: .center
                     )
                     .offset(x: 0, y: dismissalOffsetY)
+                    .clipped()
 
             }
             .frame(
@@ -442,9 +443,11 @@ private struct ZoomablePhotoView: View {
                 contentMode: .fit,
                 networkAccessAllowed: true
             )
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .frame(width: proxy.size.width, height: proxy.size.height)
+            .clipped()
             .scaleEffect(scale)
             .offset(offset)
+            .clipped()
             .gesture(zoomGesture.simultaneously(with: panGesture))
             .onTapGesture(count: 2) {
                 withAnimation(.spring(response: 0.34, dampingFraction: 0.82)) {

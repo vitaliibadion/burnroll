@@ -87,8 +87,8 @@ struct ReviewHistoryView: View {
                 }
             } message: {
                 Text(
-                    "These items will move to Recently Deleted in Photos, where they may remain for up to 30 days. "
-                    + "Delete them there to recover storage immediately."
+                    "These items move to Recently Deleted for up to 30 days. "
+                    + "Photos will ask you to confirm."
                 )
             }
             .alert(
@@ -100,7 +100,7 @@ struct ReviewHistoryView: View {
             ) {
                 Button("OK", role: .cancel) {}
             } message: {
-                Text(appState.deletionErrorMessage ?? "Please try again.")
+                Text(appState.deletionErrorMessage ?? "Please try again, and confirm Delete when Photos asks.")
             }
             .sheet(item: $deletionSummary) { summary in
                 CleaningCompleteView(summary: summary) {

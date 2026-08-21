@@ -383,7 +383,12 @@ final class AppState {
             }
             return summary
         } catch {
-            deletionErrorMessage = error.localizedDescription
+            let deletionError = PhotoDeletionService.DeletionError.from(error)
+            if deletionError.isUserCancellation {
+                return nil
+            }
+
+            deletionErrorMessage = deletionError.localizedDescription
             AnalyticsService.recordNonFatal(context: "photo_deletion")
             return nil
         }
