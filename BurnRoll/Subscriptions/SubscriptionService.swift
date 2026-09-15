@@ -1,5 +1,6 @@
 import Foundation
 import StoreKit
+import UIKit
 
 @MainActor
 @Observable
@@ -104,6 +105,32 @@ final class SubscriptionService {
             errorMessage = String(localized: "Couldn't restore purchases. Try again.")
             return false
         }
+    }
+
+    /// Apple's offer-code sheet. Codes are created in App Store Connect after Pro is approved.
+    func redeemOfferCode() async -> Bool {
+        errorMessage = nil
+        guard let scene = Self.foregroundWindowScene else {
+            errorMessage = String(localized: "Couldn't redeem the code. Try the App Store: Account → Redeem Gift Card or Code.")
+            return false
+        }
+        do {
+            try await AppStore.presentOfferCodeRedeemSheet(in: scene)
+            await refreshPurchases()
+            return isSubscribed
+        } catch is CancellationError {
+            return false
+        } catch StoreKitError.userCancelled {
+            return false
+        } catch {
+            errorMessage = String(localized: "Couldn't redeem the code. Try the App Store: Account → Redeem Gift Card or Code.")
+            return false
+        }
+    }
+
+    private static var foregroundWindowScene: UIWindowScene? {
+        let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
+        return scenes.first { $0.activationState == .foregroundActive } ?? scenes.first
     }
 
     func product(for plan: SubscriptionPlan) -> Product? {

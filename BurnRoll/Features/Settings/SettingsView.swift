@@ -91,6 +91,21 @@ struct SettingsView: View {
                             }
                             .buttonStyle(.plain)
                             .disabled(appState.subscriptions.isPurchasing)
+
+                            Divider()
+                                .overlay(BurnRollTheme.primaryText.opacity(0.08))
+
+                            Button {
+                                Task { await redeemOfferCode() }
+                            } label: {
+                                settingsRow(
+                                    title: String(localized: "Redeem code"),
+                                    subtitle: String(localized: "Use an App Store offer code for BurnRoll Pro"),
+                                    systemImage: "gift.fill"
+                                )
+                            }
+                            .buttonStyle(.plain)
+                            .disabled(appState.subscriptions.isPurchasing)
                         }
                     }
 
@@ -491,6 +506,15 @@ struct SettingsView: View {
         SuperwallService.register(SuperwallPlacement.restorePurchases)
         if await appState.subscriptions.restore() {
             restoreAlertMessage = String(localized: "Purchases restored.")
+        } else if let message = appState.subscriptions.errorMessage {
+            restoreAlertMessage = message
+        }
+    }
+
+    private func redeemOfferCode() async {
+        SuperwallService.register(SuperwallPlacement.redeemOfferCode)
+        if await appState.subscriptions.redeemOfferCode() {
+            restoreAlertMessage = String(localized: "Code redeemed. BurnRoll Pro is unlocked.")
         } else if let message = appState.subscriptions.errorMessage {
             restoreAlertMessage = message
         }

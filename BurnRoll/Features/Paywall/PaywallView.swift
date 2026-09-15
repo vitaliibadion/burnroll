@@ -218,10 +218,20 @@ struct PaywallView: View {
 
     private var legalFooter: some View {
         VStack(spacing: 8) {
-            Button(String(localized: "Restore purchases")) {
-                Task {
-                    if await subscriptions.restore() {
-                        onComplete()
+            HStack(spacing: 16) {
+                Button(String(localized: "Restore purchases")) {
+                    Task {
+                        if await subscriptions.restore() {
+                            onComplete()
+                        }
+                    }
+                }
+                Button(String(localized: "Redeem code")) {
+                    Task {
+                        SuperwallService.register(SuperwallPlacement.redeemOfferCode)
+                        if await subscriptions.redeemOfferCode() {
+                            onComplete()
+                        }
                     }
                 }
             }

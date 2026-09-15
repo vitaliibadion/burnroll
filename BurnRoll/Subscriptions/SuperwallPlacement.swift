@@ -5,4 +5,5 @@ enum SuperwallPlacement {
     static let startCleaning = "start_cleaning"
     static let confirmDelete = "confirm_delete"
     static let restorePurchases = "restore_purchases"
+    static let redeemOfferCode = "redeem_offer_code"
 }
