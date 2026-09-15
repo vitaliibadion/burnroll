@@ -185,4 +185,21 @@ public struct SessionState: Equatable, Sendable {
         }
         estimatedBytes = burnQueue.reduce(0) { $0 + $1.estimatedByteSize }
     }
+
+    #if DEBUG
+    mutating func seedScreenshotHistory(
+        decisions: [(MediaAsset, ReviewDecision)],
+        estimatedBytesOverride: Int64? = nil
+    ) {
+        reviewHistory = decisions.enumerated().map { index, pair in
+            ReviewAction(asset: pair.0, decision: pair.1, indexBeforeAction: index)
+        }
+        reviewedCount = reviewHistory.count
+        currentIndex = 0
+        rebuildBurnQueue()
+        if let estimatedBytesOverride {
+            estimatedBytes = estimatedBytesOverride
+        }
+    }
+    #endif
 }

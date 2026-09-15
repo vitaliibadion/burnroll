@@ -14,6 +14,12 @@ enum AnalyticsService {
         case sessionEnded = "session_ended"
         case onboardingStarted = "onboarding_started"
         case onboardingCompleted = "onboarding_completed"
+        case paywallStarted = "paywall_started"
+        case paywallDeclined = "paywall_declined"
+        case trialStarted = "trial_started"
+        case subscriptionStarted = "subscription_started"
+        case purchaseRestored = "purchase_restored"
+        case purchaseFailed = "purchase_failed"
         case photoPermissionRequested = "photo_permission_requested"
         case photoPermissionGranted = "photo_permission_granted"
         case photoPermissionDenied = "photo_permission_denied"
@@ -94,6 +100,21 @@ enum AnalyticsService {
     }
 
     static func log(_ event: Event, parameters: [String: Any] = [:]) {
+        log(event, parameters: parameters, registerPlacement: true)
+    }
+
+    static func logSuperwallForwarded(_ event: Event) {
+        log(event, parameters: [:], registerPlacement: false)
+    }
+
+    private static func log(
+        _ event: Event,
+        parameters: [String: Any],
+        registerPlacement: Bool
+    ) {
+        if registerPlacement {
+            SuperwallService.registerAnalyticsPlacement(event.rawValue)
+        }
         guard isEnabled else { return }
 
         var payload = contextParameters()
@@ -147,6 +168,24 @@ enum AnalyticsService {
         crashlytics.setCustomValue(sanitizedContext(authorizationStatus), forKey: "authorization_status")
         crashlytics.setCustomValue(max(0, assetCount), forKey: "library_asset_count")
         crashlytics.setCustomValue(reviewScope.rawValue, forKey: "review_scope")
+    }
+
+    static func setSuperwallCohort(experimentID: String, variantID: String) {
+        guard isEnabled else { return }
+
+        let experiment = sanitizedID(experimentID)
+        let variant = sanitizedID(variantID)
+        guard !experiment.isEmpty, !variant.isEmpty else { return }
+
+        Analytics.setUserProperty(experiment, forName: "sw_experiment_id")
+        Analytics.setUserProperty(variant, forName: "sw_variant_id")
+        Crashlytics.crashlytics().setCustomValue(experiment, forKey: "sw_experiment_id")
+        Crashlytics.crashlytics().setCustomValue(variant, forKey: "sw_variant_id")
+    }
+
+    private static func sanitizedID(_ value: String) -> String {
+        let allowed = value.filter { $0.isLetter || $0.isNumber || $0 == "_" || $0 == "-" }
+        return String(allowed.prefix(36))
     }
 
     private static func contextParameters() -> [String: Any] {

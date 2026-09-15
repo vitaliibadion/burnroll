@@ -5,3 +5,15 @@ DerivedData/
 xcuserdata/
 GoogleService-Info.plist
 
+# Local App Store copy (keywords, titles, descriptions)
+AppStore/ASO.md
+
+# Screenshot capture working files
+AppStore/Screenshots/captures/
+AppStore/Screenshots/demo-roll/
+AppStore/Screenshots/.venv/
+AppStore/Screenshots/preview-raw.mp4
+AppStore/Screenshots/__pycache__/
+AppStore/Screenshots/**/__pycache__/
+DerivedData/
+

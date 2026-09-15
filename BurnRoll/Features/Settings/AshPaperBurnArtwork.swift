@@ -1,10 +1,12 @@
 import SwiftUI
 
 struct AshPaperBurnArtwork: View {
+    var isActive = true
+
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        if reduceMotion {
+        if reduceMotion || !isActive {
             Canvas { context, size in
                 drawArtwork(context: &context, size: size, time: 0.64)
             }
@@ -452,5 +454,77 @@ struct AshPaperBurnArtwork: View {
     private struct FrameSample {
         let point: CGPoint
         let normal: CGVector
+    }
+}
+
+struct BurnedPaperSpaceCard: View {
+    var recoveredBytes: Int64
+    var itemCount: Int
+    var isActive = true
+
+    private let paperInk = Color(red: 0.19, green: 0.095, blue: 0.055)
+
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 30, style: .continuous)
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            Color(red: 0.12, green: 0.065, blue: 0.045),
+                            Color(red: 0.29, green: 0.095, blue: 0.045),
+                            Color(red: 0.095, green: 0.052, blue: 0.060)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+
+            AshPaperBurnArtwork(isActive: isActive)
+                .allowsHitTesting(false)
+
+            VStack(spacing: 9) {
+                BurnRollSymbol(
+                    systemName: "flame.fill",
+                    size: 30,
+                    weight: .bold,
+                    role: .light
+                )
+                .frame(width: 58, height: 58)
+                .background(.black.opacity(0.72), in: Circle())
+                .overlay {
+                    Circle()
+                        .stroke(BurnRollTheme.ember.opacity(0.7), lineWidth: 1)
+                }
+                .shadow(color: BurnRollTheme.ember.opacity(0.32), radius: 10)
+
+                Text(String(localized: "ESTIMATED SPACE RECOVERABLE"))
+                    .font(.caption.weight(.heavy))
+                    .tracking(1.1)
+                    .foregroundStyle(paperInk.opacity(0.70))
+                    .multilineTextAlignment(.center)
+                    .minimumScaleFactor(0.7)
+                    .lineLimit(2)
+
+                Text(recoveredBytes.formattedByteCount)
+                    .font(.system(.largeTitle, design: .rounded, weight: .heavy))
+                    .foregroundStyle(paperInk)
+                    .minimumScaleFactor(0.7)
+                    .lineLimit(1)
+
+                Text(String(localized: "From \(itemCount.formatted()) items moved to Recently Deleted"))
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(paperInk.opacity(0.78))
+                    .multilineTextAlignment(.center)
+                    .minimumScaleFactor(0.75)
+                    .lineLimit(2)
+            }
+            .padding(.horizontal, 28)
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 30, style: .continuous)
+                .stroke(.white.opacity(0.16), lineWidth: 1)
+        }
+        .shadow(color: BurnRollTheme.burn.opacity(0.18), radius: 24, y: 14)
     }
 }

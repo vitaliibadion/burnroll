@@ -16,13 +16,13 @@ enum AppIconOption: String, CaseIterable, Identifiable {
         }
     }
 
-    var title: String {
-        switch self {
-        case .classic: "Classic"
-        case .paper: "Paper"
-        case .ember: "Ember"
+        var title: String {
+            switch self {
+            case .classic: String(localized: "Classic")
+            case .paper: String(localized: "Paper")
+            case .ember: String(localized: "Ember")
+            }
         }
-    }
 
     var previewImageName: String {
         switch self {

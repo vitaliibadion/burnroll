@@ -1,12 +1,26 @@
 import SwiftUI
 
 struct ReviewHistoryView: View {
-    private enum ReviewFilter: String, CaseIterable, Identifiable {
-        case all = "All"
-        case kept = "Kept"
-        case burn = "Burn"
+    private enum ReviewFilter: CaseIterable, Identifiable {
+        case all
+        case kept
+        case burn
 
-        var id: String { rawValue }
+        var id: String {
+            switch self {
+            case .all: "all"
+            case .kept: "kept"
+            case .burn: "burn"
+            }
+        }
+
+        var emptyLabel: String {
+            switch self {
+            case .all: String(localized: "All")
+            case .kept: String(localized: "Kept")
+            case .burn: String(localized: "Burn")
+            }
+        }
     }
 
     @Environment(AppState.self) private var appState
@@ -78,17 +92,18 @@ struct ReviewHistoryView: View {
             ) {
                 Button("Cancel", role: .cancel) {}
                 Button("Delete \(appState.session.burnQueue.count)", role: .destructive) {
-                    Task {
-                        if let summary = await appState.deleteBurnQueue() {
-                            deletionSummary = summary
-                            Haptics.deletionSucceeded()
+                    SuperwallService.register(SuperwallPlacement.confirmDelete) {
+                        Task {
+                            if let summary = await appState.deleteBurnQueue() {
+                                deletionSummary = summary
+                                Haptics.deletionSucceeded()
+                            }
                         }
                     }
                 }
             } message: {
                 Text(
-                    "These items move to Recently Deleted for up to 30 days. "
-                    + "Photos will ask you to confirm."
+                    "These items move to Recently Deleted for up to 30 days. Photos will ask you to confirm."
                 )
             }
             .alert(
@@ -123,7 +138,7 @@ struct ReviewHistoryView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else if filteredActions.isEmpty {
             ContentUnavailableView(
-                "No \(filter.rawValue.lowercased()) items",
+                String(localized: "No \(filter.emptyLabel) items"),
                 systemImage: filter == .kept ? "heart" : "flame",
                 description: Text("Change the filter to review your other decisions.")
             )
@@ -148,7 +163,7 @@ struct ReviewHistoryView: View {
                         }
                         .buttonStyle(.plain)
                         .accessibilityLabel(accessibilityLabel(for: action))
-                        .accessibilityHint("Opens this item so you can change Keep or Burn")
+                        .accessibilityHint(String(localized: "Opens this item so you can change Keep or Burn"))
                         .transition(.scale.combined(with: .opacity))
                     }
                 }
@@ -163,19 +178,19 @@ struct ReviewHistoryView: View {
         HStack(spacing: 8) {
             summaryMetric(
                 value: appState.session.reviewHistory.count.formatted(),
-                label: "Reviewed",
+                label: String(localized: "Reviewed"),
                 systemImage: "photo.stack.fill",
                 color: BurnRollTheme.ember
             )
             summaryMetric(
                 value: appState.session.keptAssets.count.formatted(),
-                label: "Kept",
+                label: String(localized: "Kept"),
                 systemImage: "heart.fill",
                 color: BurnRollTheme.keep
             )
             summaryMetric(
                 value: appState.session.burnQueue.count.formatted(),
-                label: "Burn",
+                label: String(localized: "Burn"),
                 systemImage: "flame.fill",
                 color: BurnRollTheme.burn
             )
@@ -184,9 +199,9 @@ struct ReviewHistoryView: View {
         .background(BurnRollTheme.surface, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(
-            "\(appState.session.reviewHistory.count) reviewed, "
-            + "\(appState.session.keptAssets.count) kept, "
-            + "\(appState.session.burnQueue.count) marked to burn"
+            String(
+                localized: "\(appState.session.reviewHistory.count) reviewed, \(appState.session.keptAssets.count) kept, \(appState.session.burnQueue.count) marked to burn"
+            )
         )
     }
 
@@ -201,16 +216,18 @@ struct ReviewHistoryView: View {
     }
 
     private var deleteButtonTitle: String {
-        if appState.isDeleting { return "Deleting…" }
-        if appState.session.burnQueue.isEmpty { return "Nothing marked to burn" }
-        return "Burn \(appState.session.burnQueue.count) · \(appState.session.estimatedBytes.formattedByteCount)"
+        if appState.isDeleting { return String(localized: "Deleting…") }
+        if appState.session.burnQueue.isEmpty { return String(localized: "Nothing marked to burn") }
+        return String(
+            localized: "Burn \(appState.session.burnQueue.count) · \(appState.session.estimatedBytes.formattedByteCount)"
+        )
     }
 
     private func filterTitle(_ filter: ReviewFilter) -> String {
         switch filter {
-        case .all: "All \(appState.session.reviewHistory.count)"
-        case .kept: "Kept \(appState.session.keptAssets.count)"
-        case .burn: "Burn \(appState.session.burnQueue.count)"
+        case .all: String(localized: "All \(appState.session.reviewHistory.count)")
+        case .kept: String(localized: "Kept \(appState.session.keptAssets.count)")
+        case .burn: String(localized: "Burn \(appState.session.burnQueue.count)")
         }
     }
 
@@ -237,12 +254,14 @@ struct ReviewHistoryView: View {
     }
 
     private func accessibilityLabel(for action: ReviewAction) -> String {
-        let decision = action.decision == .burn ? "marked to burn" : "kept"
-        return "\(action.asset.mediaType.rawValue) \(decision)"
+        let decision = action.decision == .burn
+            ? String(localized: "marked to burn")
+            : String(localized: "kept")
+        return "\(action.asset.mediaType.localizedTitle) \(decision)"
     }
 }
 
-private struct CleaningCompleteView: View {
+struct CleaningCompleteView: View {
     let summary: AppState.DeletionSummary
     let onDone: () -> Void
 
@@ -261,18 +280,18 @@ private struct CleaningCompleteView: View {
                 .font(.largeTitle.bold())
 
             HStack(spacing: 10) {
-                metric(summary.itemCount.formatted(), label: "items burned")
+                metric(summary.itemCount.formatted(), label: String(localized: "items burned"))
                 metricDivider
-                metric(summary.clearedBytes.formattedByteCount, label: "potential space")
+                metric(summary.clearedBytes.formattedByteCount, label: String(localized: "potential space"))
                 metricDivider
-                metric(summary.reviewDuration.formattedReviewDuration, label: "review time")
+                metric(summary.reviewDuration.formattedReviewDuration, label: String(localized: "review time"))
             }
 
             RecentlyDeletedNotice()
 
             Spacer()
 
-            PrimaryButton(title: "Continue burning", systemImage: "flame.fill", action: onDone)
+            PrimaryButton(title: String(localized: "Continue burning"), systemImage: "flame.fill", action: onDone)
         }
         .padding(24)
         .burnRollBackground()

@@ -12,7 +12,7 @@ struct MediaMetadataView: View {
                         size: 14,
                         role: .photo
                     )
-                    Text(asset.mediaType.rawValue)
+                    Text(asset.mediaType.localizedTitle)
                 }
                 Spacer()
                 Text("~\(asset.estimatedByteSize.formattedByteCount)")

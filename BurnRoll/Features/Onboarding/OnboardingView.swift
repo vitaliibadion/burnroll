@@ -2,11 +2,10 @@ import SwiftUI
 
 struct OnboardingView: View {
     private struct Page {
-        let symbol: String
+        let kind: OnboardingDemoKind
         let title: String
         let message: String
         let accent: Color
-        let role: BurnRollSymbolRole
     }
 
     var isReplay: Bool = false
@@ -17,40 +16,36 @@ struct OnboardingView: View {
     private var pages: [Page] {
         [
             Page(
-                symbol: "photo.stack.fill",
+                kind: .swipe,
                 title: isReplay
-                    ? "A quick refresher."
-                    : "Burn the clutter.\nKeep the memories.",
+                    ? String(localized: "A quick refresher.")
+                    : String(localized: "Swipe. Decide. Done."),
                 message: isReplay
                     ? (hasReviewedMedia
-                        ? "Your reviewed items stay marked. This is just a reminder of how BurnRoll works."
-                        : "Swipe through your camera roll one decision at a time. Your library and settings stay as they are.")
-                    : "Clear your camera roll one thoughtful decision at a time.",
-                accent: BurnRollTheme.burn,
-                role: .burn
+                        ? String(localized: "Your reviewed items stay marked. This is just a reminder of how BurnRoll works.")
+                        : String(localized: "Swipe through your camera roll one decision at a time. Your library and settings stay as they are."))
+                    : String(localized: "Keep or burn with one gesture. Nothing deletes until you confirm."),
+                accent: BurnRollTheme.keep
             ),
             Page(
-                symbol: "hand.draw.fill",
-                title: "Swipe. Decide. Done.",
-                message: "Swipe left to Burn. Swipe right to Keep. The first photo will show you both.",
-                accent: BurnRollTheme.keep,
-                role: .keep
+                kind: .undo,
+                title: String(localized: "Undo a Keep or Burn."),
+                message: String(localized: "The middle button takes back your last decision. That item leaves Reviewed and the burn list, so you can choose again."),
+                accent: BurnRollTheme.ember
             ),
             Page(
-                symbol: "arrow.uturn.backward",
-                title: "Undo a Keep or Burn.",
-                message: "The middle button takes back your last decision. That item leaves Reviewed and the burn list, so you can choose again.",
-                accent: BurnRollTheme.ember,
-                role: .neutral
-            ),
-            Page(
-                symbol: "checkmark.shield.fill",
-                title: "Nothing burns by accident.",
+                kind: .review,
+                title: String(localized: "Review before you delete."),
                 message: hasReviewedMedia
-                    ? "Items you've already reviewed stay marked. Confirm again before anything is deleted."
-                    : "Review everything before deletion.",
-                accent: BurnRollTheme.ember,
-                role: .keep
+                    ? String(localized: "Items you've already reviewed stay marked. Confirm again before anything is deleted.")
+                    : String(localized: "See every thumbnail. Drop anything you still want. Then confirm."),
+                accent: BurnRollTheme.burn
+            ),
+            Page(
+                kind: .storage,
+                title: String(localized: "Clear space your way."),
+                message: String(localized: "Watch the storage you selected add up before anything is burned."),
+                accent: BurnRollTheme.ember
             )
         ]
     }
@@ -61,15 +56,15 @@ struct OnboardingView: View {
 
     private var primaryTitle: String {
         if isLastPage {
-            isReplay ? "Got it" : "Continue to Photos"
+            isReplay ? String(localized: "Got it") : String(localized: "Continue")
         } else {
-            "Continue"
+            String(localized: "Continue")
         }
     }
 
     private var primarySystemImage: String {
         if isLastPage {
-            isReplay ? "checkmark" : "photo.on.rectangle"
+            isReplay ? "checkmark" : "arrow.right"
         } else {
             "arrow.right"
         }
@@ -92,7 +87,7 @@ struct OnboardingView: View {
 
             TabView(selection: $pageIndex) {
                 ForEach(pages.indices, id: \.self) { index in
-                    page(pages[index])
+                    page(pages[index], index: index)
                         .tag(index)
                 }
             }
@@ -123,48 +118,46 @@ struct OnboardingView: View {
         }
     }
 
-    private func page(_ page: Page) -> some View {
-        VStack(spacing: 28) {
-            Spacer()
+    private func page(_ page: Page, index: Int) -> some View {
+        GeometryReader { geo in
+            let compact = geo.size.height < 620
+            VStack(spacing: compact ? 16 : 22) {
+                Spacer(minLength: 4)
 
-            ZStack {
-                RoundedRectangle(cornerRadius: 46, style: .continuous)
-                    .fill(BurnRollTheme.surface)
-                    .frame(width: 250, height: 250)
-                    .shadow(color: page.accent.opacity(0.17), radius: 35, y: 18)
+                OnboardingDemoReel(
+                    kind: page.kind,
+                    isActive: pageIndex == index,
+                    accent: page.accent
+                )
+                .scaleEffect(compact ? 0.9 : 1, anchor: .center)
 
-                Circle()
-                    .fill(page.accent.opacity(0.13))
-                    .frame(width: 166, height: 166)
+                VStack(spacing: compact ? 10 : 14) {
+                    Text(page.title)
+                        .font(.system(.largeTitle, design: .rounded, weight: .bold))
+                        .multilineTextAlignment(.center)
+                        .foregroundStyle(BurnRollTheme.primaryText)
+                        .minimumScaleFactor(0.8)
 
-                if page.symbol == "photo.stack.fill" {
-                    BurnRollBrandMark(size: 132)
-                } else {
-                    BurnRollSymbol(
-                        systemName: page.symbol,
-                        size: 76,
-                        weight: .medium,
-                        role: page.role
-                    )
+                    Text(page.message)
+                        .font(compact ? .body : .title3)
+                        .multilineTextAlignment(.center)
+                        .foregroundStyle(BurnRollTheme.secondaryText)
+                        .padding(.horizontal, 8)
                 }
+                .padding(.horizontal, 16)
+
+                Spacer(minLength: 4)
             }
-            .accessibilityHidden(true)
-
-            VStack(spacing: 14) {
-                Text(page.title)
-                    .font(.system(.largeTitle, design: .rounded, weight: .bold))
-                    .multilineTextAlignment(.center)
-                    .foregroundStyle(BurnRollTheme.primaryText)
-
-                Text(page.message)
-                    .font(.title3)
-                    .multilineTextAlignment(.center)
-                    .foregroundStyle(BurnRollTheme.secondaryText)
-                    .padding(.horizontal, 22)
-            }
-
-            Spacer()
+            .frame(width: geo.size.width, height: geo.size.height)
         }
-        .padding(.horizontal, 24)
+        .padding(.horizontal, 8)
     }
+}
+
+#Preview("First run") {
+    OnboardingView(onComplete: {})
+}
+
+#Preview("Replay") {
+    OnboardingView(isReplay: true, hasReviewedMedia: true, onComplete: {})
 }

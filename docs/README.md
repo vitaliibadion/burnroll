@@ -8,6 +8,9 @@ This folder is the GitHub Pages site for [`vitaliibadion/burnroll`](https://gith
 
 - Privacy Policy: `https://vitaliibadion.github.io/burnroll/privacy/`
 - Support: `https://vitaliibadion.github.io/burnroll/support/`
+- Terms of Use (Apple standard EULA): `https://www.apple.com/legal/internet-services/itunes/dev/stdeula/`
+
+Privacy and Support must describe BurnRoll Pro (Apple billing, trial, restore, cancel) before you submit a version that sells subscriptions. After editing `docs/`, push and wait for GitHub Pages to update.
 
 ## Publish
 

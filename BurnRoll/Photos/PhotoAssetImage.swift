@@ -12,26 +12,28 @@ struct PhotoAssetImage: View {
     @State private var requestID: PHImageRequestID?
 
     var body: some View {
-        Group {
-            if let image {
-                Image(uiImage: image)
-                    .resizable()
-                    .aspectRatio(contentMode: contentMode)
-            } else {
-                ZStack {
-                    BurnRollTheme.surface
-                    ProgressView()
-                        .tint(BurnRollTheme.ember)
+        Color.clear
+            .overlay {
+                if let image {
+                    Image(uiImage: image)
+                        .resizable()
+                        .aspectRatio(contentMode: contentMode)
+                } else {
+                    ZStack {
+                        BurnRollTheme.surface
+                        ProgressView()
+                            .tint(BurnRollTheme.ember)
+                    }
                 }
             }
-        }
-        .onAppear(perform: requestImage)
-        .onDisappear(perform: cancelRequest)
-        .onChange(of: assetID) { _, _ in
-            image = nil
-            cancelRequest()
-            requestImage()
-        }
+            .clipped()
+            .onAppear(perform: requestImage)
+            .onDisappear(perform: cancelRequest)
+            .onChange(of: assetID) { _, _ in
+                image = nil
+                cancelRequest()
+                requestImage()
+            }
     }
 
     private func requestImage() {

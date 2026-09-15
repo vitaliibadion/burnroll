@@ -1,0 +1,100 @@
+{
+  "identifier" : "A7C3E91B",
+  "nonRenewingSubscriptions" : [],
+  "products" : [],
+  "settings" : {
+    "_applicationInternalID" : "0000000000",
+    "_developerTeamID" : "UGJSKWJ63R",
+    "_failTransactionsEnabled" : false,
+    "_lastBackgroundFetchState" : -1,
+    "_locale" : "en_US",
+    "_storefront" : "USA",
+    "_storeKitErrors" : []
+  },
+  "subscriptionGroups" : [
+    {
+      "id" : "2147580001",
+      "localizations" : [
+        {
+          "description" : "Unlimited Keep and Burn, with storage you selected before anything is deleted.",
+          "displayName" : "BurnRoll Pro",
+          "locale" : "en_US"
+        }
+      ],
+      "name" : "BurnRoll Pro",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [],
+          "codeOffers" : [],
+          "displayPrice" : "69.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "2000000001",
+          "localizations" : [
+            {
+              "description" : "Unlimited access, billed yearly.",
+              "displayName" : "Annually",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "com.vitaliibadion.burnroll.pro.yearly",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "Yearly",
+          "subscriptionGroupID" : "2147580001",
+          "type" : "RecurringSubscription"
+        },
+        {
+          "adHocOffers" : [],
+          "codeOffers" : [],
+          "displayPrice" : "14.99",
+          "familyShareable" : false,
+          "groupNumber" : 2,
+          "internalID" : "2000000002",
+          "localizations" : [
+            {
+              "description" : "Unlimited access, billed monthly.",
+              "displayName" : "Monthly",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "com.vitaliibadion.burnroll.pro.monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Monthly",
+          "subscriptionGroupID" : "2147580001",
+          "type" : "RecurringSubscription"
+        },
+        {
+          "adHocOffers" : [],
+          "codeOffers" : [],
+          "displayPrice" : "6.99",
+          "familyShareable" : false,
+          "groupNumber" : 3,
+          "internalID" : "2000000003",
+          "introductoryOffer" : {
+            "displayPrice" : "0",
+            "internalID" : "3000000003",
+            "numberOfPeriods" : 1,
+            "paymentMode" : "free",
+            "subscriptionPeriod" : "P3D"
+          },
+          "localizations" : [
+            {
+              "description" : "Unlimited access, billed weekly after a 3-day free trial.",
+              "displayName" : "Weekly",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "com.vitaliibadion.burnroll.pro.weekly",
+          "recurringSubscriptionPeriod" : "P1W",
+          "referenceName" : "Weekly",
+          "subscriptionGroupID" : "2147580001",
+          "type" : "RecurringSubscription"
+        }
+      ]
+    }
+  ],
+  "version" : {
+    "major" : 3,
+    "minor" : 0
+  }
+}

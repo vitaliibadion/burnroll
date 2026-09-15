@@ -27,7 +27,7 @@ struct MediaSourcePickerView: View {
                 }
 
                 ForEach(visibleSections) { section in
-                    Section(section.rawValue) {
+                    Section(section.localizedTitle) {
                         ForEach(sources(in: section)) { source in
                             sourceRow(source)
                         }
@@ -61,8 +61,7 @@ struct MediaSourcePickerView: View {
 
                 Section {
                     Text(
-                        "BurnRoll opens Not reviewed by default, so you continue where you stopped and new photos appear automatically. "
-                        + "Categories and albums come from your Photos library. Hidden and Recently Deleted items are excluded."
+                        "BurnRoll opens Not reviewed by default, so you continue where you stopped and new photos appear automatically. Categories and albums come from your Photos library. Hidden and Recently Deleted items are excluded."
                     )
                         .font(.caption)
                         .foregroundStyle(BurnRollTheme.secondaryText)
@@ -99,7 +98,7 @@ struct MediaSourcePickerView: View {
                         } else {
                             checkpointAlert = .resetFailure(
                                 appState.reviewCheckpointErrorMessage
-                                    ?? "The review bookmark could not be reset."
+                                    ?? String(localized: "The review bookmark could not be reset.")
                             )
                         }
                     },
@@ -120,8 +119,7 @@ struct MediaSourcePickerView: View {
     }
 
     private var bookmarkSummary: String {
-        "\(reviewedItemCount.formatted()) "
-            + (reviewedItemCount == 1 ? "item remembered" : "items remembered")
+        "\(reviewedItemCount.formatted()) \(reviewedItemCount == 1 ? String(localized: "item remembered") : String(localized: "items remembered"))"
     }
 
     private var visibleSections: [PhotoLibraryService.MediaSource.Section] {
@@ -158,7 +156,7 @@ struct MediaSourcePickerView: View {
                     Text(reviewScope.title)
                         .font(.body.weight(.semibold))
                         .foregroundStyle(BurnRollTheme.primaryText)
-                    Text("\(itemCount.formatted()) \(itemCount == 1 ? "item" : "items")")
+                    Text(L10n.items(itemCount))
                         .font(.caption)
                         .foregroundStyle(BurnRollTheme.secondaryText)
                 }
@@ -179,7 +177,7 @@ struct MediaSourcePickerView: View {
         .buttonStyle(.plain)
         .listRowBackground(BurnRollTheme.surface)
         .accessibilityLabel(
-            "\(reviewScope.title), \(itemCount) items\(isSelected ? ", selected" : "")"
+            "\(reviewScope.title), \(L10n.items(itemCount))\(isSelected ? ", \(String(localized: "selected"))" : "")"
         )
     }
 
@@ -204,7 +202,7 @@ struct MediaSourcePickerView: View {
                     Text(source.title)
                         .font(.body.weight(.semibold))
                         .foregroundStyle(BurnRollTheme.primaryText)
-                    Text("\(source.itemCount.formatted()) \(source.itemCount == 1 ? "item" : "items")")
+                    Text(L10n.items(source.itemCount))
                         .font(.caption)
                         .foregroundStyle(BurnRollTheme.secondaryText)
                 }
@@ -225,7 +223,7 @@ struct MediaSourcePickerView: View {
         .buttonStyle(.plain)
         .listRowBackground(BurnRollTheme.surface)
         .accessibilityLabel(
-            "\(source.title), \(source.itemCount) items\(isSelected ? ", selected" : "")"
+            "\(source.title), \(L10n.items(source.itemCount))\(isSelected ? ", \(String(localized: "selected"))" : "")"
         )
     }
 }

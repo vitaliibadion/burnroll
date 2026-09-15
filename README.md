@@ -2,7 +2,7 @@
 
 BurnRoll is a native, local-first iPhone camera roll cleaner. Swipe left to add an item to the burn queue, swipe right to keep it, then review and explicitly confirm before PhotoKit performs any deletion.
 
-Version `0.9` is the TestFlight beta line. There is no subscription or paywall.
+Version `1.1.0` is the next App Store release (build 3). Production remains `1.0` until this version ships. BurnRoll Pro is an optional auto-renewable subscription (Weekly with a 3-day trial, Monthly, and Yearly) purchased through Apple. The paywall is native SwiftUI; Superwall is used only for subscription status and analytics.
 
 ## Current implementation
 
@@ -16,6 +16,8 @@ Version `0.9` is the TestFlight beta line. There is no subscription or paywall.
 - Optional local smart reminders evaluated when the app opens
 - Firebase Analytics and Crashlytics for product usage and stability, with no photo contents or identifiers
 - Light/dark adaptive visual system, Reduce Motion support, and VoiceOver actions
+- Native BurnRoll Pro paywall with Weekly (3-day trial), Monthly, and Yearly auto-renewable subscriptions via StoreKit 2
+- Localization for Dutch, English, French, German, Italian, Japanese, Korean, Polish, Brazilian Portuguese, Simplified Chinese, Spanish, and Ukrainian
 - Pure Swift core state tests runnable with Swift Package Manager
 
 ## App Store URLs

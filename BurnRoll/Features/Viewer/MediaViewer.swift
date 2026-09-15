@@ -227,13 +227,13 @@ private struct ViewerDecisionControls: View {
         HStack(spacing: 10) {
             decisionButton(
                 .keep,
-                title: "Keep",
+                title: String(localized: "Keep"),
                 systemImage: "heart.fill",
                 color: BurnRollTheme.keep
             )
             decisionButton(
                 .burn,
-                title: "Burn",
+                title: String(localized: "Burn"),
                 systemImage: "flame.fill",
                 color: BurnRollTheme.burn
             )
@@ -279,8 +279,8 @@ private struct ViewerDecisionControls: View {
             .contentShape(Capsule())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("Mark as \(title)")
-        .accessibilityValue(isSelected ? "Selected" : "Not selected")
+        .accessibilityLabel(String(localized: "Mark as \(title)"))
+        .accessibilityValue(isSelected ? String(localized: "Selected") : String(localized: "Not selected"))
     }
 }
 
@@ -295,7 +295,7 @@ private struct ViewerCloseButton: View {
                 .frame(width: 46, height: 46)
         }
         .modifier(ViewerCloseButtonStyle())
-        .accessibilityLabel("Close fullscreen viewer")
+        .accessibilityLabel(String(localized: "Close fullscreen viewer"))
     }
 }
 
@@ -319,7 +319,7 @@ private struct LiquidDismissIndicator: View {
                 .font(.subheadline.weight(.black))
                 .contentTransition(.symbolEffect(.replace))
 
-            Text(isPastThreshold ? "Release to close" : direction < 0 ? "Swipe up" : "Swipe down")
+            Text(isPastThreshold ? String(localized: "Release to close") : direction < 0 ? String(localized: "Swipe up") : String(localized: "Swipe down"))
                 .font(.subheadline.weight(.bold))
                 .contentTransition(.opacity)
         }
@@ -458,8 +458,8 @@ private struct ZoomablePhotoView: View {
                     }
                 }
             }
-            .accessibilityLabel("Fullscreen photo")
-            .accessibilityHint("Pinch or double tap to zoom. Swipe up or down to close when not zoomed.")
+            .accessibilityLabel(String(localized: "Fullscreen photo"))
+            .accessibilityHint(String(localized: "Pinch or double tap to zoom. Swipe up or down to close when not zoomed."))
         }
     }
 

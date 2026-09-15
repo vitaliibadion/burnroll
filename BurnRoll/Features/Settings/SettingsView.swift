@@ -28,6 +28,7 @@ struct SettingsView: View {
     @State private var selectedAppIcon = AppIconService.current
     @State private var isChangingAppIcon = false
     @State private var appIconErrorMessage: String?
+    @State private var restoreAlertMessage: String?
 
     var body: some View {
         NavigationStack {
@@ -35,19 +36,19 @@ struct SettingsView: View {
                 VStack(alignment: .leading, spacing: 24) {
                     CleanupCelebrationBanner(summary: appState.totalDeletionSummary)
 
-                    settingsSection(title: "Storage insights") {
+                    settingsSection(title: String(localized: "Storage insights")) {
                         StorageInsightsView(
                             insights: appState.storageInsights,
                             totalBurnCount: appState.totalDeletionSummary.itemCount
                         )
                     }
 
-                    settingsSection(title: "Experience") {
+                    settingsSection(title: String(localized: "Experience")) {
                         VStack(alignment: .leading, spacing: 16) {
                             Toggle(isOn: $hapticsEnabled) {
                                 settingLabel(
-                                    title: "Haptic feedback",
-                                    subtitle: "Feel decisions, undo, and successful deletion",
+                                    title: String(localized: "Haptic feedback"),
+                                    subtitle: String(localized: "Feel decisions, undo, and successful deletion"),
                                     systemImage: "waveform.path"
                                 )
                             }
@@ -69,20 +70,35 @@ struct SettingsView: View {
                                 dismiss()
                             } label: {
                                 settingsRow(
-                                    title: "How to use BurnRoll",
-                                    subtitle: "Replay the intro. Your reviews and Photos access stay as they are.",
+                                    title: String(localized: "How to use BurnRoll"),
+                                    subtitle: String(localized: "Replay the intro. Your reviews and Photos access stay as they are."),
                                     systemImage: "sparkles.rectangle.stack"
                                 )
                             }
                             .buttonStyle(.plain)
+
+                            Divider()
+                                .overlay(BurnRollTheme.primaryText.opacity(0.08))
+
+                            Button {
+                                Task { await restorePurchases() }
+                            } label: {
+                                settingsRow(
+                                    title: String(localized: "Restore purchases"),
+                                    subtitle: String(localized: "Bring back a trial or plan bought with this Apple Account"),
+                                    systemImage: "arrow.clockwise"
+                                )
+                            }
+                            .buttonStyle(.plain)
+                            .disabled(appState.subscriptions.isPurchasing)
                         }
                     }
 
-                    settingsSection(title: "Reminders") {
+                    settingsSection(title: String(localized: "Reminders")) {
                         VStack(alignment: .leading, spacing: 16) {
                             Toggle(isOn: cleanupReminderBinding) {
                                 settingLabel(
-                                    title: "Smart reminder",
+                                    title: String(localized: "Smart reminder"),
                                     subtitle: appState.cleanupReminders.selectedCadenceDescription,
                                     systemImage: "bell.and.waves.left.and.right.fill"
                                 )
@@ -183,9 +199,9 @@ struct SettingsView: View {
                                     .fixedSize(horizontal: false, vertical: true)
 
                                 Text(
-                                    "BurnRoll counts new photos when you open the app, and when your library changes while BurnRoll is open. "
-                                    + "iOS cannot watch the camera roll after you leave, so open BurnRoll after taking photos to get the reminder. "
-                                    + "The 30-day option still shows a scheduled date."
+                                    String(
+                                        localized: "BurnRoll counts new photos when you open the app, and when your library changes while BurnRoll is open. iOS cannot watch the camera roll after you leave, so open BurnRoll after taking photos to get the reminder. The 30-day option still shows a scheduled date."
+                                    )
                                 )
                                     .font(.caption)
                                     .foregroundStyle(BurnRollTheme.secondaryText)
@@ -199,7 +215,7 @@ struct SettingsView: View {
                         }
                     }
 
-                    settingsSection(title: "Photos access") {
+                    settingsSection(title: String(localized: "Photos access")) {
                         VStack(alignment: .leading, spacing: 14) {
                             HStack(spacing: 12) {
                                 settingLabel(
@@ -240,14 +256,14 @@ struct SettingsView: View {
                         }
                     }
 
-                    settingsSection(title: "Privacy & data") {
+                    settingsSection(title: String(localized: "Privacy & data")) {
                         VStack(alignment: .leading, spacing: 12) {
                             NavigationLink {
                                 PrivacyPolicyView()
                             } label: {
                                 settingsRow(
-                                    title: "Privacy policy",
-                                    subtitle: "How BurnRoll uses Photos, on-device state, analytics, and notifications",
+                                    title: String(localized: "Privacy policy"),
+                                    subtitle: String(localized: "How BurnRoll uses Photos, on-device state, analytics, and notifications"),
                                     systemImage: "hand.raised.fill"
                                 )
                             }
@@ -256,17 +272,28 @@ struct SettingsView: View {
                             Divider()
                                 .overlay(BurnRollTheme.primaryText.opacity(0.08))
 
+                            Link(destination: BurnRollLegal.termsOfUseURL) {
+                                settingsRow(
+                                    title: String(localized: "Terms of Use"),
+                                    subtitle: String(localized: "Apple’s standard licensed application end user license"),
+                                    systemImage: "doc.text.fill"
+                                )
+                            }
+
+                            Divider()
+                                .overlay(BurnRollTheme.primaryText.opacity(0.08))
+
                             RecentlyDeletedNotice()
                         }
                     }
 
-                    settingsSection(title: "Support") {
+                    settingsSection(title: String(localized: "Support")) {
                         VStack(alignment: .leading, spacing: 12) {
                             Button {
                                 UIApplication.shared.open(BurnRollLegal.supportMailtoURL)
                             } label: {
                                 settingsRow(
-                                    title: "Email us",
+                                    title: String(localized: "Email us"),
                                     subtitle: BurnRollLegal.supportEmail,
                                     systemImage: "envelope.fill"
                                 )
@@ -278,8 +305,8 @@ struct SettingsView: View {
 
                             Link(destination: BurnRollLegal.supportURL) {
                                 settingsRow(
-                                    title: "Support on the web",
-                                    subtitle: "Public contact page for App Review and users",
+                                    title: String(localized: "Support on the web"),
+                                    subtitle: String(localized: "Public contact page for App Review and users"),
                                     systemImage: "safari.fill"
                                 )
                             }
@@ -288,7 +315,7 @@ struct SettingsView: View {
                                 .overlay(BurnRollTheme.primaryText.opacity(0.08))
 
                             VStack(alignment: .leading, spacing: 4) {
-                                Text("BurnRoll \(BurnRollLegal.policyVersion)")
+                                Text(String(localized: "BurnRoll \(BurnRollLegal.policyVersion)"))
                                     .font(.subheadline.weight(.semibold))
                                 Text(BurnRollLegal.copyright)
                                     .font(.caption)
@@ -331,14 +358,26 @@ struct SettingsView: View {
                 await appState.refreshCleanupReminder()
             }
         }
+        .alert(
+            String(localized: "Restore purchases"),
+            isPresented: Binding(
+                get: { restoreAlertMessage != nil },
+                set: { if !$0 { restoreAlertMessage = nil } }
+            )
+        ) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(restoreAlertMessage ?? "")
+        }
         .alert(item: $reminderAlert) { alert in
             switch alert {
             case .consent:
                 Alert(
                     title: Text("Enable smart reminder?"),
                     message: Text(
-                        "BurnRoll will schedule a local reminder for \(appState.cleanupReminders.selectedCadenceDescription.lowercased()). "
-                        + "The prediction is calculated on-device and BurnRoll never uploads your photos."
+                        String(
+                            localized: "BurnRoll will schedule a local reminder for \(appState.cleanupReminders.selectedCadenceDescription). The prediction is calculated on-device and BurnRoll never uploads your photos."
+                        )
                     ),
                     primaryButton: .default(Text("Continue")) {
                         Task { await enableCleanupReminder() }
@@ -382,7 +421,7 @@ struct SettingsView: View {
 
     private var reminderPreview: String {
         guard reminderSnapshot != nil else {
-            return "Checking recent photos…"
+            return String(localized: "Checking recent photos…")
         }
 
         if appState.cleanupReminders.rule == .photos500 {
@@ -412,7 +451,7 @@ struct SettingsView: View {
 
                 Spacer()
 
-                Text("\(Int(photoThresholdDraft).formatted()) photos")
+                Text(L10n.photos(Int(photoThresholdDraft)))
                     .font(.caption.weight(.heavy))
                     .foregroundStyle(BurnRollTheme.ember)
                     .contentTransition(.numericText())
@@ -429,8 +468,8 @@ struct SettingsView: View {
             )
             .tint(BurnRollTheme.burn)
             .disabled(!reminderControlsEnabled)
-            .accessibilityLabel("Photo reminder threshold")
-            .accessibilityValue("\(Int(photoThresholdDraft)) photos")
+            .accessibilityLabel(String(localized: "Photo reminder threshold"))
+            .accessibilityValue(L10n.photos(Int(photoThresholdDraft)))
 
             HStack {
                 Text("20")
@@ -448,11 +487,20 @@ struct SettingsView: View {
         .opacity(reminderControlsEnabled ? 1 : 0.42)
     }
 
+    private func restorePurchases() async {
+        SuperwallService.register(SuperwallPlacement.restorePurchases)
+        if await appState.subscriptions.restore() {
+            restoreAlertMessage = String(localized: "Purchases restored.")
+        } else if let message = appState.subscriptions.errorMessage {
+            restoreAlertMessage = message
+        }
+    }
+
     private func selectionTitle(
         for rule: CleanupReminderService.SmartReminderRule
     ) -> String {
         guard rule == .photos500 else { return rule.selectionTitle }
-        return "Camera roll grows by \(Int(photoThresholdDraft).formatted()) photos"
+        return String(localized: "Camera roll grows by \(Int(photoThresholdDraft).formatted()) photos")
     }
 
     private func enableCleanupReminder() async {
@@ -534,8 +582,8 @@ struct SettingsView: View {
     private var appIconPicker: some View {
         VStack(alignment: .leading, spacing: 12) {
             settingLabel(
-                title: "App icon",
-                subtitle: "Choose how BurnRoll looks on your Home Screen. iOS will ask you to confirm.",
+                title: String(localized: "App icon"),
+                subtitle: String(localized: "Choose how BurnRoll looks on your Home Screen. iOS will ask you to confirm."),
                 systemImage: "app.fill"
             )
 
@@ -576,7 +624,7 @@ struct SettingsView: View {
                     .buttonStyle(.plain)
                     .disabled(isChangingAppIcon)
                     .accessibilityAddTraits(selectedAppIcon == option ? .isSelected : [])
-                    .accessibilityLabel("\(option.title) app icon")
+                    .accessibilityLabel(String(localized: "\(option.title) app icon"))
                 }
             }
 
@@ -600,7 +648,7 @@ struct SettingsView: View {
             selectedAppIcon = AppIconService.current
         } catch {
             selectedAppIcon = AppIconService.current
-            appIconErrorMessage = "Couldn't change the Home Screen icon. Try again on a device."
+            appIconErrorMessage = String(localized: "Couldn't change the Home Screen icon. Try again on a device.")
         }
     }
 
@@ -654,23 +702,23 @@ struct SettingsView: View {
 
     private var photoAccessTitle: String {
         switch appState.authorizationStatus {
-        case .authorized: "Full library access"
-        case .limited: "Selected photos access"
-        case .denied: "Photos access is off"
-        case .restricted: "Photos access is restricted"
-        case .notDetermined: "Photos access not requested"
-        @unknown default: "Photos access unavailable"
+        case .authorized: String(localized: "Full library access")
+        case .limited: String(localized: "Selected photos access")
+        case .denied: String(localized: "Photos access is off")
+        case .restricted: String(localized: "Photos access is restricted")
+        case .notDetermined: String(localized: "Photos access not requested")
+        @unknown default: String(localized: "Photos access unavailable")
         }
     }
 
     private var photoAccessDescription: String {
         switch appState.authorizationStatus {
-        case .authorized: "BurnRoll can show your full library"
-        case .limited: "Only photos selected in iOS are available"
-        case .denied: "Enable access to continue reviewing"
-        case .restricted: "This device prevents Photos access"
-        case .notDetermined: "Choose access when iOS asks"
-        @unknown default: "Check the app’s iOS settings"
+        case .authorized: String(localized: "BurnRoll can show your full library")
+        case .limited: String(localized: "Only photos selected in iOS are available")
+        case .denied: String(localized: "Enable access to continue reviewing")
+        case .restricted: String(localized: "This device prevents Photos access")
+        case .notDetermined: String(localized: "Choose access when iOS asks")
+        @unknown default: String(localized: "Check the app’s iOS settings")
         }
     }
 
@@ -686,12 +734,12 @@ struct SettingsView: View {
 
     private var photoAccessBadge: String {
         switch appState.authorizationStatus {
-        case .authorized: "FULL"
-        case .limited: "LIMITED"
-        case .denied: "OFF"
-        case .restricted: "RESTRICTED"
-        case .notDetermined: "PENDING"
-        @unknown default: "UNKNOWN"
+        case .authorized: String(localized: "FULL")
+        case .limited: String(localized: "LIMITED")
+        case .denied: String(localized: "OFF")
+        case .restricted: String(localized: "RESTRICTED")
+        case .notDetermined: String(localized: "PENDING")
+        @unknown default: String(localized: "UNKNOWN")
         }
     }
 
@@ -706,11 +754,11 @@ struct SettingsView: View {
 
     private var photoAccessButtonTitle: String {
         switch appState.authorizationStatus {
-        case .authorized: "Review Photos Access"
-        case .limited: "Manage Selected Photos"
-        case .denied, .restricted: "Open Photos Settings"
-        case .notDetermined: "Choose Photos Access"
-        @unknown default: "Open App Settings"
+        case .authorized: String(localized: "Review Photos Access")
+        case .limited: String(localized: "Manage Selected Photos")
+        case .denied, .restricted: String(localized: "Open Photos Settings")
+        case .notDetermined: String(localized: "Choose Photos Access")
+        @unknown default: String(localized: "Open App Settings")
         }
     }
 
@@ -731,69 +779,17 @@ struct SettingsView: View {
 private struct CleanupCelebrationBanner: View {
     let summary: AppState.DeletionSummary
 
-    private let paperInk = Color(red: 0.19, green: 0.095, blue: 0.055)
-
     var body: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 30, style: .continuous)
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            Color(red: 0.12, green: 0.065, blue: 0.045),
-                            Color(red: 0.29, green: 0.095, blue: 0.045),
-                            Color(red: 0.095, green: 0.052, blue: 0.060)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-
-            AshPaperBurnArtwork()
-                .allowsHitTesting(false)
-
-            VStack(spacing: 9) {
-                BurnRollSymbol(
-                    systemName: "flame.fill",
-                    size: 30,
-                    weight: .bold,
-                    role: .light
-                )
-                    .frame(width: 58, height: 58)
-                    .background(.black.opacity(0.72), in: Circle())
-                    .overlay {
-                        Circle()
-                            .stroke(BurnRollTheme.ember.opacity(0.7), lineWidth: 1)
-                    }
-                    .shadow(color: BurnRollTheme.ember.opacity(0.32), radius: 10)
-
-                Text("ESTIMATED SPACE RECOVERABLE")
-                    .font(.caption.weight(.heavy))
-                    .tracking(1.1)
-                    .foregroundStyle(paperInk.opacity(0.70))
-
-                Text(summary.clearedBytes.formattedByteCount)
-                    .font(.system(.largeTitle, design: .rounded, weight: .heavy))
-                    .foregroundStyle(paperInk)
-                    .contentTransition(.numericText())
-
-                Text("From \(summary.itemCount.formatted()) \(summary.itemCount == 1 ? "item" : "items") moved to Recently Deleted")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(paperInk.opacity(0.78))
-                    .multilineTextAlignment(.center)
-            }
-            .padding(.horizontal, 34)
-        }
+        BurnedPaperSpaceCard(
+            recoveredBytes: summary.clearedBytes,
+            itemCount: summary.itemCount
+        )
         .frame(height: 238)
-        .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: 30, style: .continuous)
-                .stroke(.white.opacity(0.16), lineWidth: 1)
-        }
-        .shadow(color: BurnRollTheme.burn.opacity(0.18), radius: 24, y: 14)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(
-            "Estimated recoverable space, approximately \(summary.clearedBytes.formattedByteCount) from "
-            + "\(summary.itemCount) items"
+            String(
+                localized: "Estimated recoverable space, approximately \(summary.clearedBytes.formattedByteCount) from \(summary.itemCount) items"
+            )
         )
     }
 }

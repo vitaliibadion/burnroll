@@ -16,17 +16,17 @@ final class PhotoLibraryService {
 
         var title: String {
             switch self {
-            case .notReviewed: "Not reviewed"
-            case .reviewed: "Reviewed"
-            case .all: "All items"
+            case .notReviewed: String(localized: "Not reviewed")
+            case .reviewed: String(localized: "Reviewed")
+            case .all: String(localized: "All items")
             }
         }
 
         var shortTitle: String {
             switch self {
-            case .notReviewed: "Not reviewed"
-            case .reviewed: "Reviewed"
-            case .all: "All"
+            case .notReviewed: String(localized: "Not reviewed")
+            case .reviewed: String(localized: "Reviewed")
+            case .all: String(localized: "All")
             }
         }
 
@@ -65,11 +65,19 @@ final class PhotoLibraryService {
 
     struct MediaSource: Identifiable, Hashable {
         enum Section: String, CaseIterable, Identifiable {
-            case library = "Library"
-            case mediaTypes = "Media Types"
-            case albums = "Albums"
+            case library
+            case mediaTypes
+            case albums
 
             var id: String { rawValue }
+
+            var localizedTitle: String {
+                switch self {
+                case .library: String(localized: "Library")
+                case .mediaTypes: String(localized: "Media Types")
+                case .albums: String(localized: "Albums")
+                }
+            }
         }
 
         fileprivate enum Filter: Hashable {
@@ -124,7 +132,7 @@ final class PhotoLibraryService {
     ]
     private(set) var selectedSource = MediaSource(
         id: "all",
-        title: "All",
+        title: String(localized: "All"),
         systemImage: "photo.stack.fill",
         section: .library,
         itemCount: 0,
@@ -214,7 +222,7 @@ final class PhotoLibraryService {
         sources.append(
             makeSource(
                 id: "all",
-                title: "All",
+                title: String(localized: "All"),
                 systemImage: "photo.stack.fill",
                 section: .library,
                 filter: .all,
@@ -226,7 +234,7 @@ final class PhotoLibraryService {
         sources.append(
             makeSource(
                 id: "recents",
-                title: "Recents",
+                title: String(localized: "Recents"),
                 systemImage: "clock.arrow.circlepath",
                 section: .library,
                 filter: .recents,
@@ -237,7 +245,7 @@ final class PhotoLibraryService {
         )
         appendSmartAlbum(
             .smartAlbumRecentlyAdded,
-            title: "Recently Added",
+            title: String(localized: "Recently Added"),
             systemImage: "calendar.badge.plus",
             section: .library,
             options: options,
@@ -247,7 +255,7 @@ final class PhotoLibraryService {
         )
         appendSmartAlbum(
             .smartAlbumFavorites,
-            title: "Favorites",
+            title: String(localized: "Favorites"),
             systemImage: "heart.fill",
             section: .library,
             options: options,
@@ -259,7 +267,7 @@ final class PhotoLibraryService {
         sources.append(
             makeSource(
                 id: "photos",
-                title: "Photos",
+                title: String(localized: "Photos"),
                 systemImage: "photo.fill",
                 section: .mediaTypes,
                 filter: .photos,
@@ -271,7 +279,7 @@ final class PhotoLibraryService {
         sources.append(
             makeSource(
                 id: "videos",
-                title: "Videos",
+                title: String(localized: "Videos"),
                 systemImage: "video.fill",
                 section: .mediaTypes,
                 filter: .videos,
@@ -282,20 +290,20 @@ final class PhotoLibraryService {
         )
 
         let smartMediaTypes: [(PHAssetCollectionSubtype, String, String)] = [
-            (.smartAlbumSelfPortraits, "Selfies", "person.crop.square.fill"),
-            (.smartAlbumLivePhotos, "Live Photos", "livephoto"),
-            (.smartAlbumDepthEffect, "Portrait", "person.crop.rectangle.fill"),
-            (.smartAlbumPanoramas, "Panoramas", "pano.fill"),
-            (.smartAlbumTimelapses, "Time-lapse", "timer"),
-            (.smartAlbumSlomoVideos, "Slo-mo", "gauge.with.dots.needle.33percent"),
-            (.smartAlbumCinematic, "Cinematic", "camera.metering.center.weighted"),
-            (.smartAlbumBursts, "Bursts", "square.stack.3d.up.fill"),
-            (.smartAlbumScreenshots, "Screenshots", "iphone"),
-            (.smartAlbumScreenRecordings, "Screen Recordings", "record.circle"),
-            (.smartAlbumSpatial, "Spatial", "visionpro.fill"),
-            (.smartAlbumRAW, "RAW", "camera.filters"),
-            (.smartAlbumAnimated, "Animated", "sparkles.rectangle.stack.fill"),
-            (.smartAlbumLongExposures, "Long Exposures", "camera.aperture")
+            (.smartAlbumSelfPortraits, String(localized: "Selfies"), "person.crop.square.fill"),
+            (.smartAlbumLivePhotos, String(localized: "Live Photos"), "livephoto"),
+            (.smartAlbumDepthEffect, String(localized: "Portrait"), "person.crop.rectangle.fill"),
+            (.smartAlbumPanoramas, String(localized: "Panoramas"), "pano.fill"),
+            (.smartAlbumTimelapses, String(localized: "Time-lapse"), "timer"),
+            (.smartAlbumSlomoVideos, String(localized: "Slo-mo"), "gauge.with.dots.needle.33percent"),
+            (.smartAlbumCinematic, String(localized: "Cinematic"), "camera.metering.center.weighted"),
+            (.smartAlbumBursts, String(localized: "Bursts"), "square.stack.3d.up.fill"),
+            (.smartAlbumScreenshots, String(localized: "Screenshots"), "iphone"),
+            (.smartAlbumScreenRecordings, String(localized: "Screen Recordings"), "record.circle"),
+            (.smartAlbumSpatial, String(localized: "Spatial"), "visionpro.fill"),
+            (.smartAlbumRAW, String(localized: "RAW"), "camera.filters"),
+            (.smartAlbumAnimated, String(localized: "Animated"), "sparkles.rectangle.stack.fill"),
+            (.smartAlbumLongExposures, String(localized: "Long Exposures"), "camera.aperture")
         ]
 
         for (subtype, title, systemImage) in smartMediaTypes {
@@ -329,7 +337,7 @@ final class PhotoLibraryService {
             albums.append(
                 MediaSource(
                     id: "album-\(collection.localIdentifier)",
-                    title: collection.localizedTitle ?? "Album",
+                    title: collection.localizedTitle ?? String(localized: "Album"),
                     systemImage: "rectangle.stack.fill",
                     section: .albums,
                     itemCount: itemCount,

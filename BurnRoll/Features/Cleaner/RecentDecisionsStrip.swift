@@ -59,7 +59,7 @@ struct RecentDecisionsStrip: View {
                             }
                             .buttonStyle(.plain)
                             .accessibilityLabel(accessibilityLabel(for: action))
-                            .accessibilityHint("Opens this item so you can change the decision")
+                            .accessibilityHint(String(localized: "Opens this item so you can change the decision"))
                             .transition(.scale(scale: 0.82).combined(with: .opacity))
                         }
                     }
@@ -81,11 +81,13 @@ struct RecentDecisionsStrip: View {
         .shadow(color: .black.opacity(0.14), radius: 10, y: 5)
         .animation(.snappy(duration: 0.3), value: recentActions)
         .accessibilityElement(children: .contain)
-        .accessibilityLabel("Recent decisions, " + recentActions.count.formatted() + " shown")
+        .accessibilityLabel(String(localized: "Recent decisions, \(recentActions.count) shown"))
     }
 
     private func accessibilityLabel(for action: ReviewAction) -> String {
-        let decision = action.decision == .burn ? "marked to burn" : "kept"
-        return "\(action.asset.mediaType.rawValue) \(decision)"
+        let decision = action.decision == .burn
+            ? String(localized: "marked to burn")
+            : String(localized: "kept")
+        return "\(action.asset.mediaType.localizedTitle) \(decision)"
     }
 }

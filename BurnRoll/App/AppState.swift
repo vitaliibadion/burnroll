@@ -19,6 +19,7 @@ final class AppState {
 
     enum Route: Equatable {
         case onboarding
+        case paywall
         case authorization
         case welcome
         case cleaner
@@ -26,6 +27,7 @@ final class AppState {
 
     private enum DefaultsKey {
         static let completedOnboarding = "completedOnboarding"
+        static let needsPaywall = "needsPaywall"
         static let hasCompletedSwipeHint = "hasCompletedSwipeHint"
         static let lastCleanupItemCount = "lastCleanupItemCount"
         static let lastCleanupClearedBytes = "lastCleanupClearedBytes"
@@ -41,6 +43,7 @@ final class AppState {
 
     let photoLibrary = PhotoLibraryService()
     let cleanupReminders: CleanupReminderService
+    let subscriptions = SubscriptionService()
     private let defaults: UserDefaults
     private let reviewCheckpointStore: ReviewCheckpointStore
 
@@ -85,9 +88,23 @@ final class AppState {
         reviewedAssetIdentifiers = reviewCheckpointStore.load()
         cleanupReminders = CleanupReminderService(defaults: defaults)
         hasCompletedSwipeHint = defaults.bool(forKey: DefaultsKey.hasCompletedSwipeHint)
-        route = defaults.bool(forKey: DefaultsKey.completedOnboarding)
-            ? .authorization
-            : .onboarding
+        var completedOnboarding = defaults.bool(forKey: DefaultsKey.completedOnboarding)
+        var needsPaywall = defaults.bool(forKey: DefaultsKey.needsPaywall)
+        #if DEBUG
+        if ScreenshotDemo.isActive {
+            completedOnboarding = true
+            needsPaywall = false
+            hasCompletedSwipeHint = true
+            isShowingLaunchFire = false
+        }
+        #endif
+        if !completedOnboarding {
+            route = .onboarding
+        } else if needsPaywall {
+            route = .paywall
+        } else {
+            route = .authorization
+        }
 
         let itemCount = defaults.integer(forKey: DefaultsKey.lastCleanupItemCount)
         let clearedBytes = defaults.object(forKey: DefaultsKey.lastCleanupClearedBytes) as? Int64 ?? 0
@@ -150,6 +167,12 @@ final class AppState {
                 await self?.handlePhotoLibraryChange()
             }
         }
+
+        SuperwallService.shared.attach(appState: self, subscriptions: subscriptions)
+    }
+
+    var hasCompletedOnboarding: Bool {
+        defaults.bool(forKey: DefaultsKey.completedOnboarding)
     }
 
     var currentAsset: MediaAsset? {
@@ -176,7 +199,7 @@ final class AppState {
     }
 
     func bootstrap() async {
-        guard route != .onboarding else { return }
+        guard route != .onboarding, route != .paywall else { return }
         authorizationStatus = PhotoAuthorizationService.status
         updateCrashlyticsContext()
 
@@ -204,6 +227,14 @@ final class AppState {
         }
 
         AnalyticsService.log(.onboardingCompleted)
+        SuperwallService.shared.refreshUserAttributes()
+        defaults.set(true, forKey: DefaultsKey.needsPaywall)
+        route = .paywall
+    }
+
+    func finishPaywall() {
+        defaults.set(false, forKey: DefaultsKey.needsPaywall)
+        SuperwallService.shared.refreshUserAttributes()
         route = .authorization
     }
 
@@ -214,7 +245,7 @@ final class AppState {
         switch destination {
         case .cleaner, .welcome:
             route = destination
-        case .authorization, .onboarding:
+        case .authorization, .onboarding, .paywall:
             if PhotoAuthorizationService.hasUsableAccess {
                 loadLibraryAndShowWelcome()
             } else {
@@ -249,12 +280,12 @@ final class AppState {
                 .photoPermissionDenied,
                 parameters: ["authorization_status": authorizationAnalyticsValue]
             )
-            errorMessage = "BurnRoll needs Photos access so you can review and safely delete the items you choose."
+            errorMessage = String(localized: "BurnRoll needs Photos access so you can review and safely delete the items you choose.")
         case .notDetermined:
             break
         @unknown default:
             AnalyticsService.log(.photoPermissionDenied, parameters: ["authorization_status": "unknown"])
-            errorMessage = "Photos access is not available."
+            errorMessage = String(localized: "Photos access is not available.")
         }
     }
 
@@ -326,12 +357,20 @@ final class AppState {
         isLoadingLibrary = false
         updateCrashlyticsContext()
         route = .welcome
+        applyScreenshotDemoIfNeeded()
     }
 
     func startCleaning() {
+        SuperwallService.register(SuperwallPlacement.startCleaning) { [weak self] in
+            self?.beginCleaningSession()
+        }
+    }
+
+    func beginCleaningSession() {
         session.beginReviewTiming(at: Date())
         hasLoggedReviewSessionCompletion = false
         AnalyticsService.log(.reviewSessionStarted)
+        SuperwallService.shared.refreshUserAttributes()
         route = .cleaner
     }
 
@@ -512,6 +551,56 @@ final class AppState {
             .reviewSessionCompleted,
             parameters: ["photos_reviewed_count": session.reviewedCount]
         )
+    }
+
+    private func applyScreenshotDemoIfNeeded() {
+        #if DEBUG
+        guard ScreenshotDemo.isActive, photoLibrary.assetCount > 0 else { return }
+
+        hasCompletedSwipeHint = true
+        pendingSwipeHint = false
+        isShowingLaunchFire = false
+
+        let historyCount = min(9, max(0, photoLibrary.assetCount - 1))
+        var decisions: [(MediaAsset, ReviewDecision)] = []
+        for index in 1...max(1, historyCount) {
+            guard let asset = photoLibrary.mediaAsset(at: index) else { continue }
+            decisions.append((asset, index % 3 == 0 ? .keep : .burn))
+        }
+        session.seedScreenshotHistory(
+            decisions: decisions,
+            estimatedBytesOverride: 1_800_000_000
+        )
+
+        storageInsights = StorageInsights(
+            spaceRecovered: 1_800_000_000,
+            photosBurned: 86,
+            videosRemoved: 7,
+            cleanupStreak: 4
+        )
+        lastDeletionSummary = nil
+        switch ScreenshotDemo.scene {
+        case .complete, .storage:
+            lastDeletionSummary = DeletionSummary(
+                itemCount: 93,
+                clearedBytes: 1_800_000_000,
+                reviewDuration: 12 * 60
+            )
+        default:
+            break
+        }
+        totalDeletionSummary = lastDeletionSummary ?? DeletionSummary(
+            itemCount: 93,
+            clearedBytes: 1_800_000_000,
+            reviewDuration: 12 * 60
+        )
+
+        if ScreenshotDemo.shouldShowWelcome {
+            route = .welcome
+        } else {
+            startCleaning()
+        }
+        #endif
     }
 
     private func markReviewed(_ identifier: String) {

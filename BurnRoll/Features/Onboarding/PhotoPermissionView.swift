@@ -51,13 +51,13 @@ struct PhotoPermissionView: View {
             Spacer()
 
             if appState.authorizationStatus == .denied || appState.authorizationStatus == .restricted {
-                PrimaryButton(title: "Open Settings", systemImage: "gear") {
+                PrimaryButton(title: String(localized: "Open Settings"), systemImage: "gear") {
                     guard let settingsURL = URL(string: UIApplication.openSettingsURLString) else { return }
                     UIApplication.shared.open(settingsURL)
                 }
             } else {
                 PrimaryButton(
-                    title: isRequesting ? "Requesting Access…" : "Allow Photos Access",
+                    title: isRequesting ? String(localized: "Requesting Access…") : String(localized: "Allow Photos Access"),
                     systemImage: "photo.on.rectangle",
                     isEnabled: !isRequesting
                 ) {
@@ -71,5 +71,14 @@ struct PhotoPermissionView: View {
         }
         .padding(24)
         .burnRollBackground()
+        .task {
+            #if DEBUG
+            guard ScreenshotDemo.isActive else { return }
+            guard appState.authorizationStatus == .notDetermined else { return }
+            isRequesting = true
+            await appState.requestPhotoAccess()
+            isRequesting = false
+            #endif
+        }
     }
 }

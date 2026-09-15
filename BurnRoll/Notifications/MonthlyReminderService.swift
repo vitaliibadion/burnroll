@@ -14,25 +14,25 @@ final class CleanupReminderService {
 
         var title: String {
             switch self {
-            case .photos500: "Photo count"
-            case .storage5GB: "5 GB"
-            case .days30: "30 days"
+            case .photos500: String(localized: "Photo count")
+            case .storage5GB: String(localized: "5 GB")
+            case .days30: String(localized: "30 days")
             }
         }
 
         var selectionTitle: String {
             switch self {
-            case .photos500: "Camera roll grows by a photo count"
-            case .storage5GB: "Camera roll grows by about 5 GB"
-            case .days30: "30 days have passed"
+            case .photos500: String(localized: "Camera roll grows by a photo count")
+            case .storage5GB: String(localized: "Camera roll grows by about 5 GB")
+            case .days30: String(localized: "30 days have passed")
             }
         }
 
         var cadenceDescription: String {
             switch self {
-            case .photos500: "A selected number of new photos"
-            case .storage5GB: "Around 5 GB of new media"
-            case .days30: "30 days after your last check-in"
+            case .photos500: String(localized: "A selected number of new photos")
+            case .storage5GB: String(localized: "Around 5 GB of new media")
+            case .days30: String(localized: "30 days after your last check-in")
             }
         }
 
@@ -112,34 +112,32 @@ final class CleanupReminderService {
 
     var selectedCadenceDescription: String {
         switch rule {
-        case .photos500: "After \(photoThreshold.formatted()) new photos"
+        case .photos500: String(localized: "After \(photoThreshold.formatted()) new photos")
         case .storage5GB, .days30: rule.cadenceDescription
         }
     }
 
     var statusText: String {
-        guard isEnabled else { return "Off" }
+        guard isEnabled else { return String(localized: "Off") }
 
         switch rule {
         case .photos500:
             if accumulatedNewPhotos >= photoThreshold {
-                return "Due now"
+                return String(localized: "Due now")
             }
-            return "\(accumulatedNewPhotos.formatted()) of \(photoThreshold.formatted())"
+            return String(localized: "\(accumulatedNewPhotos.formatted()) of \(photoThreshold.formatted())")
 
         case .storage5GB:
             return nextReminderDate == nil && accumulatedNewPhotos == 0
-                ? "Waiting for growth"
-                : "Timing varies"
+                ? String(localized: "Waiting for growth")
+                : String(localized: "Timing varies")
 
         case .days30:
             if observedPhotoCount == 0, nextReminderDate == nil {
-                return "No photos · skipped"
+                return String(localized: "No photos · skipped")
             }
             guard let nextReminderDate else { return rule.title }
-            return "Next: " + nextReminderDate.formatted(
-                .dateTime.month(.abbreviated).day().hour().minute()
-            )
+            return String(localized: "Next: \(nextReminderDate.formatted(.dateTime.month(.abbreviated).day().hour().minute()))")
         }
     }
 
@@ -275,10 +273,17 @@ final class CleanupReminderService {
     }
 
     func notificationBody(photoCount: Int, usesSpecificCount: Bool = true) -> String {
-        CleanupReminderPlanner.notificationBody(
-            photoCount: photoCount,
-            usesSpecificCount: usesSpecificCount
-        )
+        if usesSpecificCount, let estimate = CleanupTimeEstimate(photoCount: photoCount) {
+            return String(
+                localized: "You have \(photoCount) new photos. Want to clean them up? Reviewing should take \(estimate.localizedDurationPhrase)."
+            )
+        }
+
+        return String(localized: "New photos may be waiting. Open BurnRoll for a quick cleanup.")
+    }
+
+    private func localizedNotificationBody(photoCount: Int, usesSpecificCount: Bool) -> String {
+        notificationBody(photoCount: photoCount, usesSpecificCount: usesSpecificCount)
     }
 
     private func performRefresh(with snapshot: PhotoLibraryService.ReminderLibrarySnapshot) async {
@@ -414,8 +419,8 @@ final class CleanupReminderService {
         usesSpecificCount: Bool
     ) -> UNMutableNotificationContent {
         let content = UNMutableNotificationContent()
-        content.title = "Ready for a quick cleanup?"
-        content.body = notificationBody(
+        content.title = String(localized: "Ready for a quick cleanup?")
+        content.body = localizedNotificationBody(
             photoCount: photoCount,
             usesSpecificCount: usesSpecificCount
         )
@@ -499,7 +504,7 @@ private enum CleanupReminderError: LocalizedError {
     case notificationsDisabled
 
     var errorDescription: String? {
-        "Notifications are disabled for BurnRoll. Enable them in iOS Settings to use cleanup reminders."
+        String(localized: "Notifications are disabled for BurnRoll. Enable them in iOS Settings to use cleanup reminders.")
     }
 }
 

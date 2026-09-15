@@ -15,11 +15,11 @@ enum PhotoDeletionService {
         var errorDescription: String? {
             switch self {
             case .noAssetsFound:
-                "The selected items could not be found in the Photos library."
+                String(localized: "The selected items could not be found in the Photos library.")
             case .userCancelled:
-                "Deletion was cancelled. Your burn queue is unchanged."
+                String(localized: "Deletion was cancelled. Your burn queue is unchanged.")
             case .failed:
-                "Photos couldn’t complete the deletion. Try again, and confirm Delete on the system sheet."
+                String(localized: "Photos couldn’t complete the deletion. Try again, and confirm Delete on the system sheet.")
             }
         }
 

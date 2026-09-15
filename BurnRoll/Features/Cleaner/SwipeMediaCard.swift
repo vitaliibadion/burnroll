@@ -4,6 +4,7 @@ struct SwipeMediaCard: View {
     let library: PhotoLibraryService
     let asset: MediaAsset
     var playsSwipeHint = false
+    var posedOffset: CGFloat = 0
     let onOpen: () -> Void
     let onDecision: (ReviewDecision) -> Void
     var onSwipeHintFinished: () -> Void = {}
@@ -20,8 +21,7 @@ struct SwipeMediaCard: View {
 
     var body: some View {
         GeometryReader { proxy in
-            let progress = min(abs(offsetX) / commitThreshold, 1)
-            let isPortrait = asset.pixelHeight > asset.pixelWidth
+            let progress = visualProgress
 
             VStack(spacing: 0) {
                 Color.clear
@@ -33,17 +33,22 @@ struct SwipeMediaCard: View {
                                 width: proxy.size.width * displayScale,
                                 height: proxy.size.height * displayScale
                             ),
-                            contentMode: isPortrait ? .fill : .fit
+                            contentMode: .fill
                         )
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .padding(.horizontal, isPortrait ? 0 : 8)
-                        .padding(.top, isPortrait ? 0 : 8)
-                        .clipped()
                     }
                     .overlay {
                         decisionTint(progress: progress)
                     }
-                    .clipped()
+                    .clipShape(
+                        UnevenRoundedRectangle(
+                            topLeadingRadius: 30,
+                            bottomLeadingRadius: 0,
+                            bottomTrailingRadius: 0,
+                            topTrailingRadius: 30,
+                            style: .continuous
+                        )
+                    )
 
                 MediaMetadataView(asset: asset)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -74,12 +79,18 @@ struct SwipeMediaCard: View {
             .gesture(dragGesture(containerWidth: proxy.size.width))
             .accessibilityElement(children: .combine)
             .accessibilityLabel(accessibilityDescription)
-            .accessibilityHint("Swipe left to burn or right to keep. Double tap to open fullscreen.")
-            .accessibilityAction(named: "Keep photo") {
+            .accessibilityHint(String(localized: "Swipe left to burn or right to keep. Double tap to open fullscreen."))
+            .accessibilityAction(named: String(localized: "Keep photo")) {
                 commit(.keep, containerWidth: proxy.size.width)
             }
-            .accessibilityAction(named: "Burn photo") {
+            .accessibilityAction(named: String(localized: "Burn photo")) {
                 commit(.burn, containerWidth: proxy.size.width)
+            }
+            .onAppear {
+                if posedOffset != 0 {
+                    offsetX = posedOffset
+                    crossedThreshold = true
+                }
             }
             .task(id: "\(asset.id)-\(playsSwipeHint)") {
                 await playSwipeHintIfNeeded()
@@ -92,9 +103,21 @@ struct SwipeMediaCard: View {
         return offsetX > 0 ? BurnRollTheme.keep : BurnRollTheme.burn
     }
 
+    private var visualProgress: CGFloat {
+        let raw = min(abs(offsetX) / commitThreshold, 1)
+        // Marketing poses use a modest offset so the photo stays in frame;
+        // keep the tint and KEEP/BURN capsule fully readable anyway.
+        if posedOffset != 0 {
+            return max(raw, 0.88)
+        }
+        return raw
+    }
+
     private var accessibilityDescription: String {
-        let date = asset.creationDate?.formatted(date: .abbreviated, time: .shortened) ?? "unknown date"
-        return "\(asset.mediaType.rawValue), \(date), approximately \(asset.estimatedByteSize.formattedByteCount)"
+        let date = asset.creationDate?.formatted(date: .abbreviated, time: .shortened) ?? String(localized: "unknown date")
+        return String(
+            localized: "\(asset.mediaType.localizedTitle), \(date), approximately \(asset.estimatedByteSize.formattedByteCount)"
+        )
     }
 
     @ViewBuilder
@@ -116,16 +139,19 @@ struct SwipeMediaCard: View {
                         weight: .black,
                         role: .light
                     )
-                    Text(offsetX > 0 ? "KEEP" : "BURN")
+                    Text(offsetX > 0 ? String(localized: "KEEP") : String(localized: "BURN"))
+                        .lineLimit(1)
+                        .fixedSize(horizontal: true, vertical: false)
                 }
                 .font(.title2.weight(.black))
                 .foregroundStyle(.white)
-                .padding(.horizontal, 18)
-                .padding(.vertical, 12)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 11)
                 .background(edgeColor.opacity(0.9), in: Capsule())
                 .opacity(progress)
                 .scaleEffect(0.85 + progress * 0.15)
-                .padding(22)
+                .fixedSize()
+                .padding(18)
                 .frame(maxHeight: .infinity, alignment: .top)
 
                 if offsetX > 0 { Spacer() }
@@ -202,7 +228,7 @@ struct SwipeMediaCard: View {
     }
 
     private func playSwipeHintIfNeeded() async {
-        guard playsSwipeHint, !isCommitting else { return }
+        guard playsSwipeHint, posedOffset == 0, !isCommitting else { return }
 
         if reduceMotion {
             onSwipeHintFinished()

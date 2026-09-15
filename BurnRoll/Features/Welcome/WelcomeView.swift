@@ -84,12 +84,14 @@ struct WelcomeView: View {
 
     private var primaryButtonTitle: String {
         if allItemCount == 0 {
-            return "No media to review"
+            return String(localized: "No media to review")
         }
         if notReviewedItemCount == 0 {
-            return "Review all again"
+            return String(localized: "Review all again")
         }
-        return appState.lastDeletionSummary == nil ? "Start burning" : "Continue burning"
+        return appState.lastDeletionSummary == nil
+            ? String(localized: "Start burning")
+            : String(localized: "Continue burning")
     }
 
     private var headline: some View {
@@ -98,13 +100,13 @@ struct WelcomeView: View {
                 .font(.system(size: 52, weight: .bold, design: .rounded))
                 .contentTransition(.numericText())
 
-            Text(notReviewedItemCount == 0 ? "all caught up" : "left to review")
+            Text(notReviewedItemCount == 0 ? String(localized: "all caught up") : String(localized: "left to review"))
                 .font(.title2.weight(.semibold))
 
             Text(
                 notReviewedItemCount == 0
-                    ? "New photos will appear automatically."
-                    : "Your bookmark keeps your place between cleanups."
+                    ? String(localized: "New photos will appear automatically.")
+                    : String(localized: "Your bookmark keeps your place between cleanups.")
             )
             .font(.subheadline)
             .foregroundStyle(BurnRollTheme.secondaryText)
@@ -113,25 +115,30 @@ struct WelcomeView: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(
             notReviewedItemCount == 0
-                ? "All caught up. No items left to review."
-                : "\(notReviewedItemCount) items left to review."
+                ? String(localized: "All caught up. No items left to review.")
+                : String(localized: "\(notReviewedItemCount) items left to review.")
         )
     }
 
     private var libraryProgressCard: some View {
         VStack(alignment: .leading, spacing: 14) {
-            HStack {
-                HStack(spacing: 7) {
+            HStack(alignment: .top, spacing: 8) {
+                HStack(alignment: .firstTextBaseline, spacing: 7) {
                     BurnRollSymbol(systemName: "bookmark.fill", size: 14, role: .photo)
                     Text("Library checkpoint")
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 .font(.subheadline.weight(.bold))
 
-                Spacer()
+                Spacer(minLength: 8)
 
-                Text("\(reviewPercentage)% reviewed")
+                Text(String(localized: "\(reviewPercentage) percent reviewed"))
                     .font(.caption.weight(.heavy))
                     .foregroundStyle(BurnRollTheme.keep)
+                    .multilineTextAlignment(.trailing)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.8)
                     .contentTransition(.numericText())
             }
 
@@ -157,21 +164,21 @@ struct WelcomeView: View {
             HStack(spacing: 0) {
                 progressMetric(
                     value: allItemCount,
-                    label: "All items",
+                    label: String(localized: "All items"),
                     systemImage: "photo.stack.fill",
                     role: .photo
                 )
                 progressDivider
                 progressMetric(
                     value: reviewedItemCount,
-                    label: "Reviewed",
+                    label: String(localized: "Reviewed"),
                     systemImage: "checkmark.seal.fill",
                     role: .keep
                 )
                 progressDivider
                 progressMetric(
                     value: notReviewedItemCount,
-                    label: "Not reviewed",
+                    label: String(localized: "Not reviewed"),
                     systemImage: "bookmark",
                     role: .burn
                 )
@@ -188,9 +195,9 @@ struct WelcomeView: View {
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(
-            "Library checkpoint. \(allItemCount) total items, "
-            + "\(reviewedItemCount) reviewed, \(notReviewedItemCount) not reviewed, "
-            + "\(reviewPercentage) percent complete."
+            String(
+                localized: "Library checkpoint. \(allItemCount) total items, \(reviewedItemCount) reviewed, \(notReviewedItemCount) not reviewed, \(reviewPercentage) percent complete."
+            )
         )
     }
 
@@ -235,7 +242,9 @@ struct WelcomeView: View {
             HStack(spacing: 0) {
                 cleanupMetric(
                     value: summary.itemCount.formatted(),
-                    label: summary.itemCount == 1 ? "item burned" : "items burned"
+                    label: summary.itemCount == 1
+                        ? String(localized: "item burned")
+                        : String(localized: "items burned")
                 )
 
                 Divider()
@@ -243,7 +252,7 @@ struct WelcomeView: View {
 
                 cleanupMetric(
                     value: summary.clearedBytes.formattedByteCount,
-                    label: "potential space"
+                    label: String(localized: "potential space")
                 )
             }
         }
@@ -251,7 +260,9 @@ struct WelcomeView: View {
         .background(BurnRollTheme.surface, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
         .accessibilityElement(children: .combine)
         .accessibilityLabel(
-            "Last cleanup: \(summary.itemCount) items burned, approximately \(summary.clearedBytes.formattedByteCount) potentially recoverable"
+            String(
+                localized: "Last cleanup: \(summary.itemCount) items burned, approximately \(summary.clearedBytes.formattedByteCount) potentially recoverable"
+            )
         )
     }
 

@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct CleanerView: View {
-    private enum SheetDestination: String, Identifiable {
+    fileprivate enum SheetDestination: String, Identifiable {
         case settings
         case mediaSource
         case review
@@ -35,6 +35,7 @@ struct CleanerView: View {
                         library: appState.photoLibrary,
                         asset: asset,
                         playsSwipeHint: appState.shouldPlaySwipeHint,
+                        posedOffset: screenshotCardOffset,
                         onOpen: { viewerAsset = asset },
                         onDecision: appState.decide,
                         onSwipeHintFinished: appState.completeSwipeHint
@@ -65,24 +66,15 @@ struct CleanerView: View {
                     : { appState.changeDecision(for: asset, to: $0) }
             )
         }
-        .sheet(item: $sheetDestination) { destination in
-            switch destination {
-            case .settings:
-                SettingsView()
-                    .environment(appState)
-            case .mediaSource:
-                MediaSourcePickerView()
-                    .environment(appState)
-            case .review:
-                ReviewHistoryView()
-                    .environment(appState)
-            }
-        }
+        .modifier(CleanerDestinationPresenter(destination: $sheetDestination, appState: appState))
         .task(id: "\(appState.photoLibrary.selectedSource.id)-\(appState.session.currentIndex)") {
             appState.photoLibrary.updateCache(
                 around: appState.session.currentIndex,
                 targetSize: CGSize(width: 1_200, height: 1_600)
             )
+        }
+        .onAppear {
+            presentScreenshotDestinationIfNeeded()
         }
     }
 
@@ -98,7 +90,7 @@ struct CleanerView: View {
                     )
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("Settings")
+                .accessibilityLabel(String(localized: "Settings"))
 
                 Button {
                     sheetDestination = .mediaSource
@@ -110,16 +102,18 @@ struct CleanerView: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(
-                    "Media source, \(appState.photoLibrary.selectedSource.title), "
-                    + "\(appState.photoLibrary.selectedReviewScope.title)"
+                    String(
+                        localized: "Media source, \(appState.photoLibrary.selectedSource.title), \(appState.photoLibrary.selectedReviewScope.title)"
+                    )
                 )
-                .accessibilityHint("Choose review status, media type, or album")
+                .accessibilityHint(String(localized: "Choose review status, media type, or album"))
             }
 
             VStack(alignment: .leading, spacing: 1) {
                 Text(
-                    "\(appState.photoLibrary.selectedReviewScope.shortTitle) · "
-                    + "\(appState.photoLibrary.selectedSource.title) · will free"
+                    String(
+                        localized: "\(appState.photoLibrary.selectedReviewScope.shortTitle) - \(appState.photoLibrary.selectedSource.title) - will free"
+                    )
                 )
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(BurnRollTheme.secondaryText)
@@ -153,14 +147,16 @@ struct CleanerView: View {
             .buttonStyle(.plain)
             .fixedSize(horizontal: true, vertical: false)
             .layoutPriority(1)
-            .accessibilityLabel("Review history, \(appState.session.reviewHistory.count) decisions")
+            .accessibilityLabel(
+                String(localized: "Review history, \(appState.session.reviewHistory.count) decisions")
+            )
         }
     }
 
     private var bottomBar: some View {
         HStack(spacing: 12) {
             decisionButton(
-                title: "Keep",
+                title: String(localized: "Keep"),
                 systemImage: "heart.fill",
                 color: BurnRollTheme.keep,
                 decision: .keep
@@ -177,10 +173,10 @@ struct CleanerView: View {
             .buttonStyle(.plain)
             .disabled(appState.session.lastAction == nil)
             .opacity(appState.session.lastAction == nil ? 0.4 : 1)
-            .accessibilityLabel("Undo last decision")
+            .accessibilityLabel(String(localized: "Undo last decision"))
 
             decisionButton(
-                title: "Burn",
+                title: String(localized: "Burn"),
                 systemImage: "flame.fill",
                 color: BurnRollTheme.burn,
                 decision: .burn
@@ -216,24 +212,24 @@ struct CleanerView: View {
         .buttonStyle(.plain)
         .disabled(appState.currentAsset == nil)
         .opacity(appState.currentAsset == nil ? 0.4 : 1)
-        .accessibilityHint("Makes the same decision as swiping the current item")
+        .accessibilityHint(String(localized: "Makes the same decision as swiping the current item"))
     }
 
     private var progressBanner: some View {
         HStack(spacing: 0) {
-            progressMetric(appState.session.totalAssetCount, label: "Total")
+            progressMetric(appState.session.totalAssetCount, label: String(localized: "Total"))
             progressDivider
-            progressMetric(appState.session.reviewedCount, label: "Processed")
+            progressMetric(appState.session.reviewedCount, label: String(localized: "Processed"))
             progressDivider
-            progressMetric(appState.session.remainingCount, label: "Remaining")
+            progressMetric(appState.session.remainingCount, label: String(localized: "Remaining"))
         }
         .padding(.vertical, 10)
         .background(BurnRollTheme.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(
-            "Library progress, \(appState.session.totalAssetCount) total, "
-            + "\(appState.session.reviewedCount) processed, "
-            + "\(appState.session.remainingCount) remaining"
+            String(
+                localized: "Library progress, \(appState.session.totalAssetCount) total, \(appState.session.reviewedCount) processed, \(appState.session.remainingCount) remaining"
+            )
         )
     }
 
@@ -264,10 +260,10 @@ struct CleanerView: View {
 
             Spacer(minLength: 8)
 
-            Text("\(summary.clearedBytes.formattedByteCount) potential")
+            Text("\(summary.clearedBytes.formattedByteCount) \(String(localized: "potential"))")
                 .font(.subheadline.weight(.bold))
 
-            Text("\(summary.itemCount) \(summary.itemCount == 1 ? "item" : "items")")
+            Text(L10n.items(summary.itemCount))
                 .font(.caption.weight(.medium))
                 .foregroundStyle(BurnRollTheme.secondaryText)
         }
@@ -276,7 +272,9 @@ struct CleanerView: View {
         .background(BurnRollTheme.surface, in: Capsule())
         .accessibilityElement(children: .combine)
         .accessibilityLabel(
-            "Last cleanup selected approximately \(summary.clearedBytes.formattedByteCount) from \(summary.itemCount) items"
+            String(
+                localized: "Last cleanup selected approximately \(summary.clearedBytes.formattedByteCount) from \(summary.itemCount) items"
+            )
         )
     }
 
@@ -288,8 +286,8 @@ struct CleanerView: View {
                 ContentUnavailableView {
                     Label(
                         appState.photoLibrary.selectedReviewScope == .notReviewed
-                            ? "Checkpoint saved"
-                            : "You’re all caught up",
+                            ? String(localized: "Checkpoint saved")
+                            : String(localized: "You’re all caught up"),
                         systemImage: appState.photoLibrary.selectedReviewScope == .notReviewed
                             ? "bookmark.fill"
                             : "sparkles"
@@ -297,8 +295,9 @@ struct CleanerView: View {
                 } description: {
                     if appState.photoLibrary.selectedReviewScope == .notReviewed {
                         Text(
-                            "You reviewed everything in \(appState.photoLibrary.selectedSource.title). "
-                            + "Come back later and new items will appear here automatically."
+                            String(
+                                localized: "You reviewed everything in \(appState.photoLibrary.selectedSource.title). Come back later and new items will appear here automatically."
+                            )
                         )
                     } else {
                         Text("You reviewed everything in \(appState.photoLibrary.selectedSource.title).")
@@ -316,8 +315,9 @@ struct CleanerView: View {
                 Label("Nothing left to review", systemImage: "checkmark.seal.fill")
             } description: {
                 Text(
-                    "Your bookmark is up to date. New photos will appear here automatically, "
-                    + "or choose Reviewed or All items from the top-left button."
+                    String(
+                        localized: "Your bookmark is up to date. New photos will appear here automatically, or choose Reviewed or All items from the top-left button."
+                    )
                 )
             }
         case .reviewed:
@@ -330,13 +330,70 @@ struct CleanerView: View {
             ContentUnavailableView {
                 Label(
                     appState.photoLibrary.selectedSource.id == "all"
-                        ? "No media found"
-                        : "No items in \(appState.photoLibrary.selectedSource.title)",
+                        ? String(localized: "No media found")
+                        : String(localized: "No items in \(appState.photoLibrary.selectedSource.title)"),
                     systemImage: appState.photoLibrary.selectedSource.systemImage
                 )
             } description: {
                 Text("Choose another media type or album from the top-left button.")
             }
+        }
+    }
+
+    private var screenshotCardOffset: CGFloat {
+        #if DEBUG
+        ScreenshotDemo.isActive ? ScreenshotDemo.posedCardOffset : 0
+        #else
+        0
+        #endif
+    }
+
+    private func presentScreenshotDestinationIfNeeded() {
+        #if DEBUG
+        guard ScreenshotDemo.isActive else { return }
+        if ScreenshotDemo.shouldOpenReview {
+            sheetDestination = .review
+        } else if ScreenshotDemo.shouldOpenSettings {
+            sheetDestination = .settings
+        }
+        #endif
+    }
+}
+
+private struct CleanerDestinationPresenter: ViewModifier {
+    @Binding var destination: CleanerView.SheetDestination?
+    let appState: AppState
+
+    func body(content: Content) -> some View {
+        #if DEBUG
+        if ScreenshotDemo.isActive {
+            content.fullScreenCover(item: $destination) { cover in
+                destinationView(cover)
+            }
+        } else {
+            content.sheet(item: $destination) { cover in
+                destinationView(cover)
+            }
+        }
+        #else
+        content.sheet(item: $destination) { cover in
+            destinationView(cover)
+        }
+        #endif
+    }
+
+    @ViewBuilder
+    private func destinationView(_ destination: CleanerView.SheetDestination) -> some View {
+        switch destination {
+        case .settings:
+            SettingsView()
+                .environment(appState)
+        case .mediaSource:
+            MediaSourcePickerView()
+                .environment(appState)
+        case .review:
+            ReviewHistoryView()
+                .environment(appState)
         }
     }
 }

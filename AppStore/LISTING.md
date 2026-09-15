@@ -1,6 +1,8 @@
-# App Store Connect listing values (v0.9)
+# App Store Connect listing values (v1.1.0)
 
 Paste these into App Store Connect. Age rating is **not** an Xcode / Info.plist field; it lives only in Connect after you answer the questionnaire.
+
+Name, subtitle, keywords, promotional text, description, and What’s New for every listing language live in local `ASO.md` (gitignored). Do not commit that file.
 
 ## URLs
 
@@ -9,7 +11,31 @@ Paste these into App Store Connect. Age rating is **not** an Xcode / Info.plist 
 | Privacy Policy URL | `https://vitaliibadion.github.io/burnroll/privacy/` |
 | Support URL | `https://vitaliibadion.github.io/burnroll/support/` |
 
-Publish `docs/` with GitHub Pages first. Apple will reject a 404 or a login-walled page.
+Terms of Use (in-app and App Store Connect if asked): `https://www.apple.com/legal/internet-services/itunes/dev/stdeula/`
+
+Publish `docs/` with GitHub Pages first. Apple will reject a 404 or a login-walled page. Privacy and Support must mention BurnRoll Pro billing (Apple processes payment, 3-day Weekly trial, restore, cancel in Apple Account → Subscriptions).
+
+## Version 1.1.0 in Connect
+
+1. App Store Connect → BurnRoll → **+ Version or Platform** → **1.1.0**.
+2. Paste What’s New from `ASO.md` (English below). Attach the three Pro IAPs to this version.
+3. Archive in Xcode with marketing version **1.1.0**, build **3**, then upload.
+
+### What’s New (English)
+
+```
+BurnRoll Pro is here.
+
+Unlimited Keep and Burn with an optional Apple subscription. Weekly includes a 3-day free trial. Monthly and Yearly have no trial. Cancel anytime in Apple Account → Subscriptions.
+
+• Billed through your Apple Account
+• Restore purchases in Settings
+• Photos still stay on this iPhone
+```
+
+## App Privacy (nutrition labels)
+
+Existing answers stay. For this subscription release, also declare **Purchase History**: not linked to identity, not used for tracking, purposes **App Functionality** and **Analytics**. Do not declare Payment Info — Apple collects card details, BurnRoll does not.
 
 ## Contact (also used as App Review contact)
 

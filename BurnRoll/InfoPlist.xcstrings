@@ -1,0 +1,107 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "CFBundleDisplayName" : {
+      "comment" : "Bundle display name",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "BurnRoll"
+          }
+        }
+      }
+    },
+    "CFBundleName" : {
+      "comment" : "Bundle name",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "BurnRoll"
+          }
+        }
+      }
+    },
+    "NSPhotoLibraryUsageDescription" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BurnRoll braucht Zugriff auf deine Mediathek, damit du unerwünschte Fotos direkt auf diesem Gerät prüfen, ordnen und entfernen kannst."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BurnRoll needs access to your photo library so you can review, organize, and remove unwanted photos directly on your device."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BurnRoll necesita acceso a tu fototeca para que revises, organices y elimines fotos no deseadas en este dispositivo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BurnRoll a besoin d’accéder à ta photothèque pour que tu puisses revoir, ranger et supprimer des photos indésirables directement sur cet appareil."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BurnRoll necessita dell’accesso alla libreria Foto per rivedere, organizzare e rimuovere le foto indesiderate direttamente sul dispositivo."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不要な写真をこのデバイス上で確認・整理・削除できるよう、BurnRollは写真ライブラリへのアクセスを必要とします。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 기기에서 원치 않는 사진을 검토, 정리, 삭제할 수 있도록 BurnRoll에 사진 보관함 접근 권한이 필요합니다."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BurnRoll heeft toegang tot je fotobibliotheek nodig zodat je ongewenste foto’s op dit apparaat kunt bekijken, ordenen en verwijderen."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BurnRoll potrzebuje dostępu do biblioteki zdjęć, abyś mógł przeglądać, porządkować i usuwać niechciane zdjęcia bezpośrednio na urządzeniu."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O BurnRoll precisa de acesso à sua biblioteca de fotos para você revisar, organizar e remover fotos indesejadas neste dispositivo."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BurnRoll потребує доступу до бібліотеки фото, щоб ви могли переглядати, впорядковувати й видаляти непотрібні фото на цьому пристрої."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BurnRoll 需要访问你的照片图库，以便你在本机审阅、整理并删除不需要的照片。"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.1"
+}

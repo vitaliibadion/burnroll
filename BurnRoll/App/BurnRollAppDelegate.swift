@@ -1,4 +1,5 @@
 import UIKit
+import SuperwallKit
 @preconcurrency import UserNotifications
 
 final class BurnRollAppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
@@ -7,10 +8,31 @@ final class BurnRollAppDelegate: NSObject, UIApplicationDelegate, UNUserNotifica
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
     ) -> Bool {
         MainActor.assumeIsolated {
+            SuperwallService.configure()
             AnalyticsService.configure()
         }
         UNUserNotificationCenter.current().delegate = self
         return true
+    }
+
+    func application(
+        _ app: UIApplication,
+        open url: URL,
+        options: [UIApplication.OpenURLOptionsKey: Any] = [:]
+    ) -> Bool {
+        Superwall.handleDeepLink(url)
+    }
+
+    func application(
+        _ application: UIApplication,
+        continue userActivity: NSUserActivity,
+        restorationHandler: @escaping ([any UIUserActivityRestoring]?) -> Void
+    ) -> Bool {
+        if userActivity.activityType == NSUserActivityTypeBrowsingWeb,
+           let url = userActivity.webpageURL {
+            return Superwall.handleDeepLink(url)
+        }
+        return false
     }
 
     nonisolated func userNotificationCenter(

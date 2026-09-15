@@ -41,8 +41,9 @@ struct PrivacyFootnote: View {
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(
-            "100 percent on-device photo processing. BurnRoll never uploads your photos to its servers. "
-            + "No photo contents in analytics. No account required."
+            String(
+                localized: "100 percent on-device photo processing. BurnRoll never uploads your photos to its servers. No photo contents in analytics. No account required."
+            )
         )
     }
 

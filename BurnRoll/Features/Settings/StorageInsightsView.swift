@@ -16,25 +16,25 @@ struct StorageInsightsView: View {
             LazyVGrid(columns: columns, spacing: 10) {
                 insightMetric(
                     value: insights.spaceRecovered.formattedByteCount,
-                    label: "Space recovered",
+                    label: String(localized: "Space recovered"),
                     systemImage: "internaldrive.fill",
                     role: .burn
                 )
                 insightMetric(
                     value: insights.photosBurned.formatted(),
-                    label: "Photos burned",
+                    label: String(localized: "Photos burned"),
                     systemImage: "photo.stack.fill",
                     role: .burn
                 )
                 insightMetric(
                     value: insights.videosRemoved.formatted(),
-                    label: "Videos removed",
+                    label: String(localized: "Videos removed"),
                     systemImage: "video.fill",
                     role: .photo
                 )
                 insightMetric(
                     value: streakValue,
-                    label: "Cleanup streak",
+                    label: String(localized: "Cleanup streak"),
                     systemImage: "flame.fill",
                     role: .keep
                 )
@@ -42,7 +42,13 @@ struct StorageInsightsView: View {
 
             if unclassifiedPreviousItems > 0 {
                 Text(
-                    "\(unclassifiedPreviousItems.formatted()) earlier \(unclassifiedPreviousItems == 1 ? "item is" : "items are") included in space recovered but predate photo/video tracking."
+                    unclassifiedPreviousItems == 1
+                        ? String(
+                            localized: "\(unclassifiedPreviousItems) earlier item is included in space recovered but predates photo/video tracking."
+                        )
+                        : String(
+                            localized: "\(unclassifiedPreviousItems) earlier items are included in space recovered but predate photo/video tracking."
+                        )
                 )
                     .font(.caption2)
                     .foregroundStyle(BurnRollTheme.secondaryText)
@@ -115,7 +121,7 @@ struct StorageInsightsView: View {
     }
 
     private var streakValue: String {
-        "\(insights.cleanupStreak.formatted()) \(insights.cleanupStreak == 1 ? "day" : "days")"
+        "\(insights.cleanupStreak.formatted()) \(insights.cleanupStreak == 1 ? String(localized: "day") : String(localized: "days"))"
     }
 
     private var unclassifiedPreviousItems: Int {
