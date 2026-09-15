@@ -56,7 +56,8 @@ final class SubscriptionService {
     }
 
     var trialPriceText: String {
-        if let offer = product(for: .weekly)?.subscription?.introductoryOffer {
+        let plan = selectedPlan.includesFreeTrial ? selectedPlan : .weekly
+        if let offer = product(for: plan)?.subscription?.introductoryOffer {
             return offer.displayPrice
         }
         return "$0.00"

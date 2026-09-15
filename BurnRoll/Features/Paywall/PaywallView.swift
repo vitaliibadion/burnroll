@@ -3,11 +3,12 @@ import SwiftUI
 struct PaywallView: View {
     @Environment(SubscriptionService.self) private var subscriptions
     let onComplete: () -> Void
+    let onDismiss: () -> Void
     @State private var pageIndex = 0
 
     private var isLastPage: Bool { pageIndex == 2 }
 
-    private var isWeeklyTrial: Bool {
+    private var selectedPlanHasTrial: Bool {
         subscriptions.selectedPlan.includesFreeTrial
     }
 
@@ -15,7 +16,7 @@ struct PaywallView: View {
         if isLastPage {
             if subscriptions.isPurchasing {
                 String(localized: "Starting…")
-            } else if isWeeklyTrial {
+            } else if selectedPlanHasTrial {
                 String(localized: "Start 3-day free trial")
             } else {
                 String(localized: "Subscribe now")
@@ -46,7 +47,7 @@ struct PaywallView: View {
 
             PrimaryButton(
                 title: primaryTitle,
-                systemImage: isLastPage ? (isWeeklyTrial ? "flame.fill" : "checkmark") : "arrow.right",
+                systemImage: isLastPage ? (selectedPlanHasTrial ? "flame.fill" : "checkmark") : "arrow.right",
                 isEnabled: !subscriptions.isPurchasing
             ) {
                 if isLastPage {
@@ -67,6 +68,18 @@ struct PaywallView: View {
             }
         }
         .burnRollBackground()
+        .safeAreaInset(edge: .top, alignment: .trailing) {
+            Button(action: onDismiss) {
+                Image(systemName: "xmark")
+                    .font(.body.weight(.bold))
+                    .foregroundStyle(BurnRollTheme.primaryText)
+                    .frame(width: 36, height: 36)
+                    .background(.ultraThinMaterial, in: Circle())
+            }
+            .buttonStyle(.plain)
+            .padding(.trailing, 16)
+            .accessibilityLabel(String(localized: "Close"))
+        }
         .task {
             subscriptions.start()
         }
@@ -102,7 +115,7 @@ struct PaywallView: View {
                         .minimumScaleFactor(0.8)
                         .padding(.top, 8)
 
-                    if isWeeklyTrial {
+                    if selectedPlanHasTrial {
                         freeTrialBanner
                     }
 
@@ -211,7 +224,9 @@ struct PaywallView: View {
         switch plan {
         case .weekly:
             String(localized: "3 days free, then \(price) per week")
-        case .monthly, .yearly:
+        case .yearly:
+            String(localized: "3 days free, then \(price) per year")
+        case .monthly:
             String(localized: "Pay now · \(plan.periodLabel)")
         }
     }
@@ -239,7 +254,7 @@ struct PaywallView: View {
             .foregroundStyle(BurnRollTheme.secondaryText)
 
             Text(
-                isWeeklyTrial
+                selectedPlanHasTrial
                     ? String(localized: "Payment is charged to your Apple Account after the 3-day trial. The plan renews automatically unless you cancel at least 24 hours before the period ends. Cancel in Settings → Apple Account → Subscriptions.")
                     : String(localized: "Payment is charged to your Apple Account at confirmation. The plan renews automatically unless you cancel at least 24 hours before the period ends. Cancel in Settings → Apple Account → Subscriptions.")
             )
@@ -288,7 +303,7 @@ struct PaywallView: View {
 
     private func startSelectedPlan() async {
         if await subscriptions.purchaseSelected() {
-            if isWeeklyTrial {
+            if selectedPlanHasTrial {
                 AnalyticsService.log(.trialStarted)
             }
             onComplete()
@@ -296,7 +311,30 @@ struct PaywallView: View {
     }
 }
 
+extension View {
+    func burnRollPaywallCover() -> some View {
+        modifier(BurnRollPaywallCover())
+    }
+}
+
+private struct BurnRollPaywallCover: ViewModifier {
+    @Environment(AppState.self) private var appState
+
+    func body(content: Content) -> some View {
+        content
+            .overlay {
+                if appState.isPaywallCoverPresented {
+                    PaywallView(
+                        onComplete: { appState.finishPaywall() },
+                        onDismiss: { appState.dismissPaywall() }
+                    )
+                    .ignoresSafeArea()
+                }
+            }
+    }
+}
+
 #Preview {
-    PaywallView(onComplete: {})
+    PaywallView(onComplete: {}, onDismiss: {})
         .environment(SubscriptionService())
 }

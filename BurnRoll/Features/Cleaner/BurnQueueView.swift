@@ -124,7 +124,13 @@ struct ReviewHistoryView: View {
                     dismiss()
                 }
             }
+            .onChange(of: appState.shouldConfirmDeletionAfterPaywall) { _, shouldConfirm in
+                guard shouldConfirm else { return }
+                appState.consumeDeletionConfirmationAfterPaywall()
+                showingDeleteConfirmation = true
+            }
         }
+        .burnRollPaywallCover()
     }
 
     @ViewBuilder
@@ -211,7 +217,11 @@ struct ReviewHistoryView: View {
             systemImage: "flame.fill",
             isEnabled: !appState.session.burnQueue.isEmpty && !appState.isDeleting
         ) {
-            showingDeleteConfirmation = true
+            if appState.subscriptions.isSubscribed {
+                showingDeleteConfirmation = true
+            } else {
+                appState.presentPaywallForDeletion()
+            }
         }
     }
 

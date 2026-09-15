@@ -37,7 +37,7 @@ enum SubscriptionPlan: String, CaseIterable, Identifiable {
     }
 
     var includesFreeTrial: Bool {
-        self == .weekly
+        self == .weekly || self == .yearly
     }
 
     var isRecommended: Bool {

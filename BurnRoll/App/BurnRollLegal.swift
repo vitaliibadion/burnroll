@@ -5,7 +5,7 @@ import Foundation
 enum BurnRollLegal {
     static let supportEmail = "burnrollsupport@gmail.com"
     static let copyright = "© 2026 BurnRoll"
-    static let policyVersion = "1.2"
+    static let policyVersion = "1.3"
 
     static let privacyPolicyURL = URL(string: "https://vitaliibadion.github.io/burnroll/privacy/")!
     static let supportURL = URL(string: "https://vitaliibadion.github.io/burnroll/support/")!
@@ -43,7 +43,7 @@ enum BurnRollLegal {
         ),
         PolicySection(
             title: String(localized: "BurnRoll Pro"),
-            text: String(localized: "BurnRoll Pro is an optional auto-renewable subscription purchased through the App Store. Weekly includes a 3-day free trial, then renews weekly. Monthly and Yearly have no trial. Payment is charged to your Apple Account at confirmation, or after the trial for Weekly. Plans renew automatically unless you cancel at least 24 hours before the period ends. Manage or cancel in iOS Settings → Apple Account → Subscriptions. Restore purchases in BurnRoll Settings. BurnRoll does not collect your payment card, billing address, or Apple Account password. Apple processes all payments.")
+            text: String(localized: "BurnRoll Pro is an optional auto-renewable subscription purchased through the App Store. Weekly and Yearly include a 3-day free trial. Monthly has no trial. Payment is charged to your Apple Account at confirmation, or after the trial for Weekly and Yearly. Plans renew automatically unless you cancel at least 24 hours before the period ends. Manage or cancel in iOS Settings → Apple Account → Subscriptions. Restore purchases in BurnRoll Settings. BurnRoll does not collect your payment card, billing address, or Apple Account password. Apple processes all payments.")
         ),
         PolicySection(
             title: String(localized: "Superwall"),

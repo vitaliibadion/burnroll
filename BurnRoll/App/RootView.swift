@@ -15,9 +15,10 @@ struct RootView: View {
                     appState.finishOnboarding()
                 }
             case .paywall:
-                PaywallView {
-                    appState.finishPaywall()
-                }
+                PaywallView(
+                    onComplete: { appState.finishPaywall() },
+                    onDismiss: { appState.dismissPaywall() }
+                )
             case .authorization:
                 PhotoPermissionView()
             case .welcome:
@@ -54,9 +55,7 @@ struct RootView: View {
                     }
                     await appState.handlePhotoLibraryChange()
                     await SuperwallService.shared.syncSubscriptionStatus()
-                    if appState.route == .paywall, appState.subscriptions.isSubscribed {
-                        appState.finishPaywall()
-                    }
+                    finishPaywallIfSubscribed()
                 }
             case .background, .inactive:
                 appState.endReviewSessionIfNeeded()
@@ -67,6 +66,11 @@ struct RootView: View {
                 break
             }
         }
+        .onChange(of: appState.subscriptions.isSubscribed) { _, isSubscribed in
+            if isSubscribed {
+                finishPaywallIfSubscribed()
+            }
+        }
         .onOpenURL { url in
             _ = SuperwallService.handleDeepLink(url)
         }
@@ -74,6 +78,13 @@ struct RootView: View {
             if let url = activity.webpageURL {
                 _ = SuperwallService.handleDeepLink(url)
             }
+        }
+    }
+
+    private func finishPaywallIfSubscribed() {
+        guard appState.subscriptions.isSubscribed else { return }
+        if appState.route == .paywall || appState.isPaywallCoverPresented {
+            appState.finishPaywall()
         }
     }
 

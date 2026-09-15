@@ -63,7 +63,7 @@ def main() -> None:
     plans = [
         ("Weekly", "3 days free, then $6.99 per week", "$6.99", True),
         ("Monthly", "Pay now · per month", "$14.99", False),
-        ("Annually", "Pay now · per year", "$69.99", False),
+        ("Annually", "3 days free, then $69.99 per year", "$69.99", False),
     ]
     y = 256
     for name, subtitle, price, selected in plans:

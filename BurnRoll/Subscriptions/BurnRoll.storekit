@@ -30,9 +30,16 @@
           "familyShareable" : false,
           "groupNumber" : 1,
           "internalID" : "2000000001",
+          "introductoryOffer" : {
+            "displayPrice" : "0",
+            "internalID" : "3000000001",
+            "numberOfPeriods" : 1,
+            "paymentMode" : "free",
+            "subscriptionPeriod" : "P3D"
+          },
           "localizations" : [
             {
-              "description" : "Unlimited access, billed yearly.",
+              "description" : "Unlimited access, billed yearly after a 3-day free trial.",
               "displayName" : "Annually",
               "locale" : "en_US"
             }

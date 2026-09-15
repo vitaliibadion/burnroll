@@ -80,6 +80,22 @@ struct SettingsView: View {
                             Divider()
                                 .overlay(BurnRollTheme.primaryText.opacity(0.08))
 
+                            if !appState.subscriptions.isSubscribed {
+                                Button {
+                                    appState.presentPaywall()
+                                } label: {
+                                    settingsRow(
+                                        title: String(localized: "BurnRoll Pro"),
+                                        subtitle: String(localized: "Subscribe to burn photos and videos from your library"),
+                                        systemImage: "flame.fill"
+                                    )
+                                }
+                                .buttonStyle(.plain)
+
+                                Divider()
+                                    .overlay(BurnRollTheme.primaryText.opacity(0.08))
+                            }
+
                             Button {
                                 Task { await restorePurchases() }
                             } label: {
@@ -355,6 +371,7 @@ struct SettingsView: View {
                 }
             }
         }
+        .burnRollPaywallCover()
         .onAppear {
             appState.refreshPhotoAuthorizationStatus()
             photoThresholdDraft = Double(appState.cleanupReminders.photoThreshold)

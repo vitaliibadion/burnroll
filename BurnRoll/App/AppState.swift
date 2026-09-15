@@ -59,6 +59,9 @@ final class AppState {
     var errorMessage: String?
     var deletionErrorMessage: String?
     var isDeleting = false
+    var isPaywallCoverPresented = false
+    private(set) var shouldConfirmDeletionAfterPaywall = false
+    private var resumeDeletionAfterPaywall = false
     private(set) var reviewedAssetIdentifiers: Set<String>
     private(set) var reviewCheckpointErrorMessage: String?
     private var newlyReviewedAssetIdentifiersInSession: Set<String> = []
@@ -228,14 +231,53 @@ final class AppState {
 
         AnalyticsService.log(.onboardingCompleted)
         SuperwallService.shared.refreshUserAttributes()
-        defaults.set(true, forKey: DefaultsKey.needsPaywall)
-        route = .paywall
+        if subscriptions.isSubscribed {
+            defaults.set(false, forKey: DefaultsKey.needsPaywall)
+            route = .authorization
+        } else {
+            defaults.set(true, forKey: DefaultsKey.needsPaywall)
+            route = .paywall
+        }
     }
 
     func finishPaywall() {
         defaults.set(false, forKey: DefaultsKey.needsPaywall)
         SuperwallService.shared.refreshUserAttributes()
-        route = .authorization
+        let resumeDeletion = resumeDeletionAfterPaywall
+        resumeDeletionAfterPaywall = false
+        if route == .paywall {
+            route = .authorization
+        }
+        isPaywallCoverPresented = false
+        if resumeDeletion, subscriptions.isSubscribed {
+            shouldConfirmDeletionAfterPaywall = true
+        }
+    }
+
+    func dismissPaywall() {
+        AnalyticsService.log(.paywallDeclined)
+        defaults.set(false, forKey: DefaultsKey.needsPaywall)
+        SuperwallService.shared.refreshUserAttributes()
+        resumeDeletionAfterPaywall = false
+        shouldConfirmDeletionAfterPaywall = false
+        if route == .paywall {
+            route = .authorization
+        }
+        isPaywallCoverPresented = false
+    }
+
+    func presentPaywall(resumeDeletion: Bool = false) {
+        guard !subscriptions.isSubscribed else { return }
+        resumeDeletionAfterPaywall = resumeDeletion
+        isPaywallCoverPresented = true
+    }
+
+    func presentPaywallForDeletion() {
+        presentPaywall(resumeDeletion: true)
+    }
+
+    func consumeDeletionConfirmationAfterPaywall() {
+        shouldConfirmDeletionAfterPaywall = false
     }
 
     private func restoreRouteAfterOnboardingReplay() {
@@ -361,9 +403,8 @@ final class AppState {
     }
 
     func startCleaning() {
-        SuperwallService.register(SuperwallPlacement.startCleaning) { [weak self] in
-            self?.beginCleaningSession()
-        }
+        SuperwallService.register(SuperwallPlacement.startCleaning)
+        beginCleaningSession()
     }
 
     func beginCleaningSession() {
@@ -470,6 +511,10 @@ final class AppState {
     func deleteBurnQueue() async -> DeletionSummary? {
         let queuedAssets = session.burnQueue
         guard !queuedAssets.isEmpty else { return nil }
+        guard subscriptions.isSubscribed else {
+            presentPaywallForDeletion()
+            return nil
+        }
         session.beginReviewTiming(at: Date())
 
         isDeleting = true

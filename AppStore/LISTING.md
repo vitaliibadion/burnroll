@@ -11,22 +11,24 @@ Name, subtitle, keywords, promotional text, description, and What’s New for ev
 | Privacy Policy URL | `https://vitaliibadion.github.io/burnroll/privacy/` |
 | Support URL | `https://vitaliibadion.github.io/burnroll/support/` |
 
-Terms of Use (in-app and App Store Connect if asked): `https://www.apple.com/legal/internet-services/itunes/dev/stdeula/`
+Terms of Use (standard Apple EULA): `https://www.apple.com/legal/internet-services/itunes/dev/stdeula/`
 
-Publish `docs/` with GitHub Pages first. Apple will reject a 404 or a login-walled page. Privacy and Support must mention BurnRoll Pro billing (Apple processes payment, 3-day Weekly trial, restore, cancel in Apple Account → Subscriptions).
+Guideline 3.1.2: this URL must appear as a full `https://` link in the **App Description** on every 1.1.0 localization (not only in the app). Do not upload a custom EULA. Keep Apple’s standard license in App Information.
+
+Publish `docs/` with GitHub Pages first. Apple will reject a 404 or a login-walled page. Privacy and Support must mention BurnRoll Pro billing (Apple processes payment, 3-day Weekly and Yearly trial, restore, cancel in Apple Account → Subscriptions).
 
 ## Version 1.1.0 in Connect
 
 1. App Store Connect → BurnRoll → **+ Version or Platform** → **1.1.0**.
 2. Paste What’s New from `ASO.md` (English below). Attach the three Pro IAPs to this version.
-3. Archive in Xcode with marketing version **1.1.0**, build **3**, then upload.
+3. Archive in Xcode with marketing version **1.1.0**, build **5**, then upload. Replace build 4 in the 1.1.0 draft if that binary is already attached.
 
 ### What’s New (English)
 
 ```
 BurnRoll Pro is here.
 
-Unlimited Keep and Burn with an optional Apple subscription. Weekly includes a 3-day free trial. Monthly and Yearly have no trial. Cancel anytime in Apple Account → Subscriptions.
+Unlimited Keep and Burn with an optional Apple subscription. Weekly and Yearly include a 3-day free trial. Monthly has no trial. Cancel anytime in Apple Account → Subscriptions.
 
 • Billed through your Apple Account
 • Restore purchases in Settings
